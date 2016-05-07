@@ -1,19 +1,41 @@
+/*!
+The MIT License (MIT)
+
+Copyright (c) 2016 Dmitriy Kubyshkin <dmitriy@kubyshkin.name>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+#ifndef BDD_FOR_C_H
+#define BDD_FOR_C_H
+
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <string.h>
-#include "bdd.h"
-
-#define __BDD_TRUE__ 1
-#define __BDD_FALSE__ 0
 
 enum __bdd_run_type__ {
-    __BDD_INIT_RUN__,
-    __BDD_TEST_RUN__,
-    __BDD_BEFORE_EACH_RUN__,
-    __BDD_AFTER_EACH_RUN__,
-    __BDD_BEFORE_RUN__,
-    __BDD_AFTER_RUN__
+    __BDD_INIT_RUN__ = 1,
+    __BDD_TEST_RUN__ = 2,
+    __BDD_BEFORE_EACH_RUN__ = 3,
+    __BDD_AFTER_EACH_RUN__ = 4,
+    __BDD_BEFORE_RUN__ = 5,
+    __BDD_AFTER_RUN__ = 6
 } ;
 
 const int __bdd_max_it_count__ = 1000;
@@ -33,11 +55,11 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
 
     if (config->error == NULL) {
         if (config->run == __BDD_TEST_RUN__) {
-            printf("    %s (OK)\n", name);
+            printf("  %s (OK)\n", name);
         }
     } else {
-        printf("    %s (FAIL)\n", name);
-        printf("        %s\n", config->error);
+        printf("  %s (FAIL)\n", name);
+        printf("    %s\n", config->error);
         free(config->error);
         config->error = NULL;
     }
@@ -59,6 +81,9 @@ int main (void) {
     // Outputting the name of the suit
     printf("%s\n", __bdd_describe_name__);
 
+    config.run = __BDD_BEFORE_RUN__;
+    __bdd_run__(&config, "before");
+
     for (int i = 0; config.test_list[i]; ++i) {
         config.run = __BDD_BEFORE_EACH_RUN__;
         __bdd_run__(&config, "before each");
@@ -70,6 +95,9 @@ int main (void) {
         config.run = __BDD_AFTER_EACH_RUN__;
         __bdd_run__(&config, "before each");
     }
+
+    config.run = __BDD_AFTER_RUN__;
+    __bdd_run__(&config, "before");
 
     return 0;
 }
@@ -86,11 +114,12 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
 } else if (__bdd_config__->run == __BDD_TEST_RUN__ && __bdd_config__->test_index-- == 0)
 
 
-#define after_each() \
-if (__bdd_config__->run == __BDD_AFTER_EACH_RUN__)
-
-#define before_each() \
-if (__bdd_config__->run == __BDD_BEFORE_EACH_RUN__)
+// Unfortunately some IDEs can't properly resolve enum names after macro substitution
+// for code completion so in the next 4 macros we are using raw values
+#define before_each() if (__bdd_config__->run == 3)
+#define after_each() if (__bdd_config__->run == 4)
+#define before() if (__bdd_config__->run == 5)
+#define after() if (__bdd_config__->run == 6)
 
 
 #define __bdd_check_message__(condition, message) if (!(condition))\
@@ -112,31 +141,4 @@ __bdd_macro_chooser_1_2__(,\
     __bdd_check_simple__(__VA_ARGS__),\
 )
 
-
-
-describe("some feature") {
-
-    static int a;
-    static int b = 3;
-
-    after_each() {
-        b = 3;
-    }
-
-    it("should not work") {
-        a = 2;
-        b = 2;
-        check(a + b == 6, "math shouldn't matter");
-    }
-
-    it("should work") {
-        check(a + b == 6, "math shouldn't matter");
-    }
-
-    before_each() {
-        a = 3;
-    }
-}
-
-
-
+#endif //BDD_FOR_C_H

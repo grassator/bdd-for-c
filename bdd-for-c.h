@@ -42,7 +42,8 @@ const int __bdd_max_it_count__ = 1000;
 
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
-    int test_index;
+    unsigned int test_index;
+    unsigned int failed_test_count;
     char** test_list;
     char* error;
 } __bdd_config_type__;
@@ -58,6 +59,7 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
             printf("  %s (OK)\n", name);
         }
     } else {
+        ++config->failed_test_count;
         printf("  %s (FAIL)\n", name);
         printf("    %s\n", config->error);
         free(config->error);
@@ -69,6 +71,7 @@ int main (void) {
     struct __bdd_config_type__ config = {
         .run = __BDD_INIT_RUN__,
         .test_index = 0,
+        .failed_test_count = 0,
         .test_list = NULL,
         .error = NULL
     };
@@ -78,13 +81,15 @@ int main (void) {
     config.test_list = malloc(sizeof(char*) * __bdd_max_it_count__);
     __bdd_test_main__(&config);
 
+    const unsigned int test_count = config.test_index;
+
     // Outputting the name of the suit
     printf("%s\n", __bdd_describe_name__);
 
     config.run = __BDD_BEFORE_RUN__;
     __bdd_run__(&config, "before");
 
-    for (int i = 0; config.test_list[i]; ++i) {
+    for (unsigned int i = 0; config.test_list[i]; ++i) {
         config.run = __BDD_BEFORE_EACH_RUN__;
         __bdd_run__(&config, "before each");
 
@@ -97,7 +102,15 @@ int main (void) {
     }
 
     config.run = __BDD_AFTER_RUN__;
-    __bdd_run__(&config, "before");
+    __bdd_run__(&config, "after");
+
+    if (config.failed_test_count > 0) {
+        printf(
+            "\n  %i test%s run, %i failed.\n",
+            test_count, test_count == 1 ? "" : "s", config.failed_test_count
+        );
+        return 1;
+    }
 
     return 0;
 }

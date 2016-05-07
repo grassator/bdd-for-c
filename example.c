@@ -10,7 +10,7 @@ describe("some feature") {
     static int b;
 
     after() {
-        printf("All done!");
+        printf("All done!\n");
     }
 
     after_each() {

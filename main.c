@@ -11,7 +11,9 @@ enum __bdd_run_type__ {
     __BDD_INIT_RUN__,
     __BDD_TEST_RUN__,
     __BDD_BEFORE_EACH_RUN__,
-    __BDD_AFTER_EACH_RUN__
+    __BDD_AFTER_EACH_RUN__,
+    __BDD_BEFORE_RUN__,
+    __BDD_AFTER_RUN__
 } ;
 
 const int __bdd_max_it_count__ = 1000;
@@ -90,23 +92,24 @@ if (__bdd_config__->run == __BDD_AFTER_EACH_RUN__)
 #define before_each() \
 if (__bdd_config__->run == __BDD_BEFORE_EACH_RUN__)
 
-#define __bdd_ensure_message__(condition, message) if (!(condition))\
+
+#define __bdd_check_message__(condition, message) if (!(condition))\
 {\
     __bdd_config__->error = malloc(2048);\
     if (strlen(message) > 2000) { message[2000] = '\0'; }\
     sprintf(__bdd_config__->error, "Assertion failed: %s", message);\
     return;\
 }
-#define __bdd_ensure_simple__(condition) __bdd_ensure_message__(condition, #condition)
+#define __bdd_check_simple__(condition) __bdd_check_message__(condition, #condition)
 
 // The interim macro that simply strips the excess and ends up with the required macro
 #define __bdd_macro_chooser_1_2__(_, _1, _2, CHOSEN_MACRO, ...) CHOSEN_MACRO
 
-#define ensure(...)\
+#define check(...)\
 __bdd_macro_chooser_1_2__(,\
     ##__VA_ARGS__,\
-    __bdd_ensure_message__(__VA_ARGS__),\
-    __bdd_ensure_simple__(__VA_ARGS__),\
+    __bdd_check_message__(__VA_ARGS__),\
+    __bdd_check_simple__(__VA_ARGS__),\
 )
 
 
@@ -123,11 +126,11 @@ describe("some feature") {
     it("should not work") {
         a = 2;
         b = 2;
-        ensure(a + b == 6, "math shouldn't matter");
+        check(a + b == 6, "math shouldn't matter");
     }
 
     it("should work") {
-        ensure(a + b == 6, "math shouldn't matter");
+        check(a + b == 6, "math shouldn't matter");
     }
 
     before_each() {

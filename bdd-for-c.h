@@ -98,7 +98,7 @@ int main (void) {
         __bdd_run__(&config, config.test_list[i]);
 
         config.run = __BDD_AFTER_EACH_RUN__;
-        __bdd_run__(&config, "before each");
+        __bdd_run__(&config, "after each");
     }
 
     config.run = __BDD_AFTER_RUN__;

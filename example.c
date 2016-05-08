@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "bdd-for-c.h"
 
 describe("some feature") {
@@ -8,10 +7,6 @@ describe("some feature") {
     // and thus will just overwrite these otherwise.
     static int a;
     static int b;
-
-    after() {
-        printf("All done!\n");
-    }
 
     after_each() {
         b = 3;

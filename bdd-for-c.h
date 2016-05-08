@@ -36,6 +36,10 @@ SOFTWARE.
 #define BDD_USE_COLOR 1
 #endif
 
+#ifndef BDD_USE_TAP
+#define BDD_USE_TAP 0
+#endif
+
 #define __BDD_COLOR_RESET__       "\x1B[0m"
 #define __BDD_COLOR_BLACK__       "\x1B[30m"             /* Black */
 #define __BDD_COLOR_RED__         "\x1B[31m"             /* Red */
@@ -66,11 +70,13 @@ enum __bdd_run_type__ {
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
     unsigned int test_index;
+    unsigned int test_tap_index;
     unsigned int failed_test_count;
     size_t test_list_size;
     char** test_list;
     char* error;
     unsigned int use_color;
+    unsigned int use_tap;
 } __bdd_config_type__;
 
 const char* __bdd_describe_name__;
@@ -81,20 +87,34 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
 
     if (config->error == NULL) {
         if (config->run == __BDD_TEST_RUN__) {
-            printf(
-                "  %s %s(OK)%s\n", name,
-                config->use_color ? __BDD_COLOR_GREEN__ : "",
-                config->use_color ? __BDD_COLOR_RESET__ : ""
-            );
+            if (config->use_tap) {
+                // We only to report tests and not setup / teardown success
+                if (config->test_tap_index) {
+                    printf("ok %i - %s\n", config->test_tap_index, name);
+                }
+            } else {
+                printf(
+                    "  %s %s(OK)%s\n", name,
+                    config->use_color ? __BDD_COLOR_GREEN__ : "",
+                    config->use_color ? __BDD_COLOR_RESET__ : ""
+                );
+            }
         }
     } else {
         ++config->failed_test_count;
-        printf(
-            "  %s %s(FAIL)%s\n", name,
-            config->use_color ? __BDD_COLOR_RED__ : "",
-            config->use_color ? __BDD_COLOR_RESET__ : ""
-        );
-        printf("    %s\n", config->error);
+        if (config->use_tap) {
+            // We only to report tests and not setup / teardown errors
+            if (config->test_tap_index) {
+                printf("not ok %i - %s\n", config->test_tap_index, name);
+            }
+        } else {
+            printf(
+                "  %s %s(FAIL)%s\n", name,
+                config->use_color ? __BDD_COLOR_RED__ : "",
+                config->use_color ? __BDD_COLOR_RESET__ : ""
+            );
+            printf("    %s\n", config->error);
+        }
         free(config->error);
         config->error = NULL;
     }
@@ -120,15 +140,22 @@ int main (void) {
     struct __bdd_config_type__ config = {
         .run = __BDD_INIT_RUN__,
         .test_index = 0,
+        .test_tap_index = 0,
         .failed_test_count = 0,
         .test_list_size = 8,
         .test_list = NULL,
         .error = NULL,
-        .use_color = 0
+        .use_color = 0,
+        .use_tap = 0
     };
 
+    const char *tap_env = getenv("BDD_USE_TAP");
+    if (BDD_USE_TAP || (tap_env && strcmp(tap_env, "") != 0 && strcmp(tap_env, "0") != 0)) {
+        config.use_tap = 1;
+    }
+
     const char *term = getenv("TERM");
-    if (BDD_USE_COLOR && isatty(fileno(stdin)) && term && strcmp(term, "") != 0) {
+    if (!config.use_tap && BDD_USE_COLOR && isatty(fileno(stdin)) && term && strcmp(term, "") != 0) {
         config.use_color = 1;
     }
 
@@ -140,25 +167,32 @@ int main (void) {
     const unsigned int test_count = config.test_index;
 
     // Outputting the name of the suit
-    printf(
-        "%s%s%s\n",
-        config.use_color ? __BDD_COLOR_BOLD__ : "",
-        __bdd_describe_name__,
-        config.use_color ? __BDD_COLOR_RESET__ : ""
-    );
+    if (config.use_tap) {
+        printf("TAP version 13\n1..%i\n", test_count);
+    } else {
+        printf(
+            "%s%s%s\n",
+            config.use_color ? __BDD_COLOR_BOLD__ : "",
+            __bdd_describe_name__,
+            config.use_color ? __BDD_COLOR_RESET__ : ""
+        );
+    }
 
     config.run = __BDD_BEFORE_RUN__;
     __bdd_run__(&config, "before");
 
     for (unsigned int i = 0; config.test_list[i]; ++i) {
         config.run = __BDD_BEFORE_EACH_RUN__;
+        config.test_tap_index = 0;
         __bdd_run__(&config, "before each");
 
         config.run = __BDD_TEST_RUN__;
         config.test_index = i;
+        config.test_tap_index = i + 1;
         __bdd_run__(&config, config.test_list[i]);
 
         config.run = __BDD_AFTER_EACH_RUN__;
+        config.test_tap_index = 0;
         __bdd_run__(&config, "after each");
     }
 
@@ -166,10 +200,12 @@ int main (void) {
     __bdd_run__(&config, "after");
 
     if (config.failed_test_count > 0) {
-        printf(
-            "\n  %i test%s run, %i failed.\n",
-            test_count, test_count == 1 ? "" : "s", config.failed_test_count
-        );
+        if (!config.use_tap) {
+            printf(
+                "\n  %i test%s run, %i failed.\n",
+                test_count, test_count == 1 ? "" : "s", config.failed_test_count
+            );
+        }
         return 1;
     }
 

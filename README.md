@@ -126,6 +126,23 @@ To disable this mode simply add a define statement before you include the `bdd-f
 #include "bdd-for-c.h"
 ```
 
+## Support for [TAP](https://testanything.org)
+
+`bdd-for-c` supports [test anything protocol](https://testanything.org) which has an output easily readable by machines allowing for an easier integration with CI systems as well as the aggregation of the output of multiple executables that are using `bdd-for-c`.
+
+To switch to TAP output mode you can either add a `define` statement before you include the framework:
+
+```c
+#define BDD_USE_TAP 1
+#include "bdd-for-c.h"
+```
+
+Or just add an environment variable when you run a test:
+
+```bash
+BDD_USE_TAP=1 ./strcmp_spec
+```
+
 ## Available Statements
 
 The `bdd-for-c` framework uses macros to introduce several new statements to the C language that are similar to the built-in statements, such as `if`.

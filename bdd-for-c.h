@@ -25,6 +25,7 @@ SOFTWARE.
 #ifndef BDD_FOR_C_H
 #define BDD_FOR_C_H
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,6 +65,22 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
         free(config->error);
         config->error = NULL;
     }
+}
+
+char* __bdd_format__(const char* format, ...) {
+    va_list va;
+    va_start(va, format);
+
+    // First we over-allocate
+    const size_t size = 2048;
+    char* result = malloc(sizeof(char) * size);
+    vsnprintf(result, size - 1, format, va);
+
+    // Then clip to an actual size
+    result = realloc(result, strlen(result) + 1);
+
+    va_end(va);
+    return result;
 }
 
 int main (void) {
@@ -142,23 +159,24 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
 #define after() if (__bdd_config__->run == 6)
 
 
-#define __bdd_check_message__(condition, message) if (!(condition))\
+#define __BDD_MACRO__(M, ...) __BDD_OVERLOAD__(M, __BDD_COUNT_ARGS__(__VA_ARGS__)) (__VA_ARGS__)
+#define __BDD_OVERLOAD__(macro_name, suffix) __BDD_EXPAND_OVERLOAD__(macro_name, suffix)
+#define __BDD_EXPAND_OVERLOAD__(macro_name, suffix) macro_name##suffix
+
+#define __BDD_COUNT_ARGS__(...) __BDD_PATTERN_MATCH__(__VA_ARGS__,_,_,_,_,_,_,_,_,_,ONE__)
+#define __BDD_PATTERN_MATCH__(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N, ...) N
+
+#define __BDD_CHECK__(condition, ...) if (!(condition))\
 {\
-    const char* fmt = "Assertion failed: %s";\
+    const char* message = __bdd_format__(__VA_ARGS__);\
+    const char* fmt = "Check failed: %s";\
     __bdd_config__->error = malloc(sizeof(char) * (strlen(fmt) + strlen(message) + 1));\
     sprintf(__bdd_config__->error, fmt, message);\
     return;\
 }
-#define __bdd_check_simple__(condition) __bdd_check_message__(condition, #condition)
+#define __BDD_CHECK_ONE__(condition) __BDD_CHECK__(condition, #condition)
 
-// The interim macro that simply strips the excess and ends up with the required macro
-#define __bdd_macro_chooser_1_2__(_, _1, _2, CHOSEN_MACRO, ...) CHOSEN_MACRO
+#define check(...) __BDD_MACRO__(__BDD_CHECK_, __VA_ARGS__)
 
-#define check(...)\
-__bdd_macro_chooser_1_2__(,\
-    ##__VA_ARGS__,\
-    __bdd_check_message__(__VA_ARGS__),\
-    __bdd_check_simple__(__VA_ARGS__),\
-)
 
 #endif //BDD_FOR_C_H

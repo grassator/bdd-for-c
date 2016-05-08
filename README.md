@@ -166,20 +166,22 @@ describe("natural number") {
 By default `check` statement uses provided expression for error reporting, so if you run the code above you will see the following line:
 
 ```
-Assertion failed: i > 0
+Check failed: i > 0
 ```
 
-Depending on your variable naming, as in this case, this can be quite useless for figuring out the cause of the failure. To remedy this problem, you can provide a string that will be used as a second argument to `check`:
+Depending on your variable naming, as in this case, this can be quite useless for figuring out the cause of the failure. To remedy this problem, you can provide a formatter and additional parameters in the same manner as with `printf`:
 
 ```
-check(i > 0, "A natural number must greater than 0");
+check(i > 0, "A natural number %i must greater than 0", i);
 ```
 
 This will give you are much more readable output:
 
 ```
-Assertion failed: A natural number must greater than 0
+Check failed: A natural number 0 must greater than 0
 ```
+
+> Due to the current internal implementation, the number of parameters to `check` is limited to 10. 
 
 While `check` statements are mostly useful inside of `it` statements, you can also use them in the setup / teardown statements (`before`, `after`, `before_each`, `after_each`) to validate some pre- or post-conditions.
 

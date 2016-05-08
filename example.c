@@ -32,7 +32,7 @@ describe("some feature") {
     }
 
     before() {
-        a = 0;
+        a = 3;
         b = 3;
     }
 }

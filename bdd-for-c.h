@@ -151,12 +151,10 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
 } else if (__bdd_config__->run == __BDD_TEST_RUN__ && __bdd_config__->test_index-- == 0)
 
 
-// Unfortunately some IDEs can't properly resolve enum names after macro substitution
-// for code completion so in the next 4 macros we are using raw values
-#define before_each() if (__bdd_config__->run == 3)
-#define after_each() if (__bdd_config__->run == 4)
-#define before() if (__bdd_config__->run == 5)
-#define after() if (__bdd_config__->run == 6)
+#define before_each() if (__bdd_config__->run == __BDD_BEFORE_EACH_RUN__)
+#define after_each() if (__bdd_config__->run == __BDD_AFTER_EACH_RUN__)
+#define before() if (__bdd_config__->run == __BDD_BEFORE_RUN__)
+#define after() if (__bdd_config__->run == __BDD_AFTER_RUN__)
 
 
 #define __BDD_MACRO__(M, ...) __BDD_OVERLOAD__(M, __BDD_COUNT_ARGS__(__VA_ARGS__)) (__VA_ARGS__)

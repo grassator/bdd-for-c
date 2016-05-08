@@ -143,9 +143,7 @@ Also same as with the built-in statements, you have to maintain a certain struct
 
 ### it
 
-`it` statements must be included directly inside of the `describe` statement, and have a sanity limit of 1000 per `describe` statement, however you should split up your specs way before that.
-
-Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
+`it` statements must be included directly inside of the `describe` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
 
 The `it` statement is basic structural block of the spec and is used to need a particular expectation, that is validated using `check` statements described below.
 

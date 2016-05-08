@@ -38,12 +38,11 @@ enum __bdd_run_type__ {
     __BDD_AFTER_RUN__ = 6
 } ;
 
-const int __bdd_max_it_count__ = 1000;
-
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
     unsigned int test_index;
     unsigned int failed_test_count;
+    size_t test_list_size;
     char** test_list;
     char* error;
 } __bdd_config_type__;
@@ -72,13 +71,14 @@ int main (void) {
         .run = __BDD_INIT_RUN__,
         .test_index = 0,
         .failed_test_count = 0,
+        .test_list_size = 8,
         .test_list = NULL,
         .error = NULL
     };
 
     // During the first run we just gather the
     // count of the tests and their descriptions
-    config.test_list = malloc(sizeof(char*) * __bdd_max_it_count__);
+    config.test_list = malloc(sizeof(char*) * config.test_list_size);
     __bdd_test_main__(&config);
 
     const unsigned int test_count = config.test_index;
@@ -122,6 +122,13 @@ void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
 
 #define it(name) \
 if (__bdd_config__->run == __BDD_INIT_RUN__) {\
+    while (__bdd_config__->test_index >= __bdd_config__->test_list_size) {\
+        __bdd_config__->test_list_size *= 2;\
+        __bdd_config__->test_list = realloc(\
+            __bdd_config__->test_list,\
+            sizeof(char*) * __bdd_config__->test_list_size\
+        );\
+    }\
     __bdd_config__->test_list[__bdd_config__->test_index] = name;\
     __bdd_config__->test_list[++__bdd_config__->test_index] = 0;\
 } else if (__bdd_config__->run == __BDD_TEST_RUN__ && __bdd_config__->test_index-- == 0)
@@ -137,9 +144,9 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
 
 #define __bdd_check_message__(condition, message) if (!(condition))\
 {\
-    __bdd_config__->error = malloc(2048);\
-    if (strlen(message) > 2000) { message[2000] = '\0'; }\
-    sprintf(__bdd_config__->error, "Assertion failed: %s", message);\
+    const char* fmt = "Assertion failed: %s";\
+    __bdd_config__->error = malloc(sizeof(char) * (strlen(fmt) + strlen(message) + 1));\
+    sprintf(__bdd_config__->error, fmt, message);\
     return;\
 }
 #define __bdd_check_simple__(condition) __bdd_check_message__(condition, #condition)

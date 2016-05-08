@@ -29,6 +29,30 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <term.h>
+
+#ifndef BDD_USE_COLOR
+#define BDD_USE_COLOR 1
+#endif
+
+#define __BDD_COLOR_RESET__       "\x1B[0m"
+#define __BDD_COLOR_BLACK__       "\x1B[30m"             /* Black */
+#define __BDD_COLOR_RED__         "\x1B[31m"             /* Red */
+#define __BDD_COLOR_GREEN__       "\x1B[32m"             /* Green */
+#define __BDD_COLOR_YELLOW__      "\x1B[33m"             /* Yellow */
+#define __BDD_COLOR_BLUE__        "\x1B[34m"             /* Blue */
+#define __BDD_COLOR_MAGENTA__     "\x1B[35m"             /* Magenta */
+#define __BDD_COLOR_CYAN__        "\x1B[36m"             /* Cyan */
+#define __BDD_COLOR_WHITE__       "\x1B[37m"             /* White */
+#define __BDD_COLOR_BOLDBLACK__   "\x1B[1m\033[30m"      /* Bold Black */
+#define __BDD_COLOR_BOLDRED__     "\x1B[1m\033[31m"      /* Bold Red */
+#define __BDD_COLOR_BOLDGREEN__   "\x1B[1m\033[32m"      /* Bold Green */
+#define __BDD_COLOR_BOLDYELLOW__  "\x1B[1m\033[33m"      /* Bold Yellow */
+#define __BDD_COLOR_BOLDBLUE__    "\x1B[1m\033[34m"      /* Bold Blue */
+#define __BDD_COLOR_BOLDMAGENTA__ "\x1B[1m\033[35m"      /* Bold Magenta */
+#define __BDD_COLOR_BOLDCYAN__    "\x1B[1m\033[36m"      /* Bold Cyan */
+#define __BDD_COLOR_BOLD__   "\x1B[1m"      /* Bold White */
 
 enum __bdd_run_type__ {
     __BDD_INIT_RUN__ = 1,
@@ -46,6 +70,7 @@ typedef struct __bdd_config_type__ {
     size_t test_list_size;
     char** test_list;
     char* error;
+    unsigned int use_color;
 } __bdd_config_type__;
 
 const char* __bdd_describe_name__;
@@ -56,11 +81,19 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
 
     if (config->error == NULL) {
         if (config->run == __BDD_TEST_RUN__) {
-            printf("  %s (OK)\n", name);
+            printf(
+                "  %s %s(OK)%s\n", name,
+                config->use_color ? __BDD_COLOR_GREEN__ : "",
+                config->use_color ? __BDD_COLOR_RESET__ : ""
+            );
         }
     } else {
         ++config->failed_test_count;
-        printf("  %s (FAIL)\n", name);
+        printf(
+            "  %s %s(FAIL)%s\n", name,
+            config->use_color ? __BDD_COLOR_RED__ : "",
+            config->use_color ? __BDD_COLOR_RESET__ : ""
+        );
         printf("    %s\n", config->error);
         free(config->error);
         config->error = NULL;
@@ -90,8 +123,14 @@ int main (void) {
         .failed_test_count = 0,
         .test_list_size = 8,
         .test_list = NULL,
-        .error = NULL
+        .error = NULL,
+        .use_color = 0
     };
+
+    const char *term = getenv("TERM");
+    if (BDD_USE_COLOR && isatty(fileno(stdin)) && term && strcmp(term, "") != 0) {
+        config.use_color = 1;
+    }
 
     // During the first run we just gather the
     // count of the tests and their descriptions
@@ -101,7 +140,12 @@ int main (void) {
     const unsigned int test_count = config.test_index;
 
     // Outputting the name of the suit
-    printf("%s\n", __bdd_describe_name__);
+    printf(
+        "%s%s%s\n",
+        config.use_color ? __BDD_COLOR_BOLD__ : "",
+        __bdd_describe_name__,
+        config.use_color ? __BDD_COLOR_RESET__ : ""
+    );
 
     config.run = __BDD_BEFORE_RUN__;
     __bdd_run__(&config, "before");
@@ -167,7 +211,9 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
 #define __BDD_CHECK__(condition, ...) if (!(condition))\
 {\
     const char* message = __bdd_format__(__VA_ARGS__);\
-    const char* fmt = "Check failed: %s";\
+    const char* fmt = __bdd_config__->use_color ?\
+        (__BDD_COLOR_RED__ "Check failed: %s" __BDD_COLOR_RESET__ ) :\
+        "Check failed: %s";\
     __bdd_config__->error = malloc(sizeof(char) * (strlen(fmt) + strlen(message) + 1));\
     sprintf(__bdd_config__->error, fmt, message);\
     return;\

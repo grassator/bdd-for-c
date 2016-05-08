@@ -55,7 +55,7 @@ strcmp
 
 ## Project Motivation and Development Philosophy
 
-In order for the testing to be truly useful it needs to be really easy to setup and use, but also scalable to large projects. The tests should be very readable, but, ideally, have the same look and feel as the host language. Finally the test output should be easy to read for humans and machines. 
+In order for the testing to be truly useful it needs to be really easy to setup and use, but also scalable to large projects. The tests should be very readable, but, ideally, have the same look and feel as the host language. The test output of the framework should be easy to read for humans and machines. Finally, the framework should only rely on ANSI-C99 features. 
  
 Unfortunately all of the existing frameworks, inspected before starting this project, lacked one more of the features mentioned above, with the most common problem being BASIC-style `BEGIN` / `END` delimiters for test, like in [CSpec framework](https://github.com/arnaudbrejeon/cspec/wiki). The issue with `BEGIN` / `END` delimiters is not just that it "doesn't look like C", but also that it makes a different typing flow and screws up IDE auto-completion support.
 
@@ -113,6 +113,17 @@ describe("some feature") {
         check(3 + 3 == 6, "wrong math!");
     }
 }
+```
+
+## Output Colorization
+
+By default if the terminal correctly reports it's color printing ability and the application is run in the interactive mode (from terminal), then the output is going to be colorized.
+ 
+To disable this mode simply add a define statement before you include the `bdd-for-c.h` file:
+
+```c
+#define BDD_USE_COLOR 0
+#include "bdd-for-c.h"
 ```
 
 ## Available Statements

@@ -1,1 +1,6 @@
 *.o
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+example

@@ -29,8 +29,22 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef _WIN32
 #include <unistd.h>
 #include <term.h>
+#define __BDD_IS_ATTY__() isatty(fileno(stdin))
+#else
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <io.h>
+#define __BDD_IS_ATTY__() _isatty(_fileno(stdin))
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // _CRT_SECURE_NO_WARNINGS
+#endif
 
 #ifndef BDD_USE_COLOR
 #define BDD_USE_COLOR 1
@@ -56,7 +70,7 @@ SOFTWARE.
 #define __BDD_COLOR_BOLDBLUE__    "\x1B[1m\033[34m"      /* Bold Blue */
 #define __BDD_COLOR_BOLDMAGENTA__ "\x1B[1m\033[35m"      /* Bold Magenta */
 #define __BDD_COLOR_BOLDCYAN__    "\x1B[1m\033[36m"      /* Bold Cyan */
-#define __BDD_COLOR_BOLD__   "\x1B[1m"      /* Bold White */
+#define __BDD_COLOR_BOLD__        "\x1B[1m"              /* Bold White */
 
 enum __bdd_run_type__ {
     __BDD_INIT_RUN__ = 1,
@@ -65,7 +79,7 @@ enum __bdd_run_type__ {
     __BDD_AFTER_EACH_RUN__ = 4,
     __BDD_BEFORE_RUN__ = 5,
     __BDD_AFTER_RUN__ = 6
-} ;
+};
 
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
@@ -80,7 +94,7 @@ typedef struct __bdd_config_type__ {
 } __bdd_config_type__;
 
 const char* __bdd_describe_name__;
-void __bdd_test_main__ (__bdd_config_type__* __bdd_config__);
+void __bdd_test_main__(__bdd_config_type__* __bdd_config__);
 
 void __bdd_run__(__bdd_config_type__* config, char* name) {
     __bdd_test_main__(config);
@@ -136,7 +150,39 @@ char* __bdd_format__(const char* format, ...) {
     return result;
 }
 
-int main (void) {
+unsigned int __bdd_is_supported_term__() {
+    unsigned int result;
+    const char *term = getenv("TERM");
+    result = term && strcmp(term, "") != 0;
+#ifndef _WIN32
+    return result;
+#else
+    if (result) {
+        return 1;
+    }
+
+    // Attempt to enable virtual terminal processing on Windows.
+    // See: https://msdn.microsoft.com/en-us/library/windows/desktop/mt638032(v=vs.85).aspx
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) {
+        return 0;
+    }
+
+    dwMode |= 0x4; // ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    if (!SetConsoleMode(hOut, dwMode)) {
+        return 0;
+    }
+
+    return 1;
+#endif
+}
+
+int main(void) {
     struct __bdd_config_type__ config = {
         .run = __BDD_INIT_RUN__,
         .test_index = 0,
@@ -154,8 +200,7 @@ int main (void) {
         config.use_tap = 1;
     }
 
-    const char *term = getenv("TERM");
-    if (!config.use_tap && BDD_USE_COLOR && isatty(fileno(stdin)) && term && strcmp(term, "") != 0) {
+    if (!config.use_tap && BDD_USE_COLOR && __BDD_IS_ATTY__() && __bdd_is_supported_term__()) {
         config.use_color = 1;
     }
 
@@ -166,7 +211,7 @@ int main (void) {
 
     const unsigned int test_count = config.test_index;
 
-    // Outputting the name of the suit
+    // Outputting the name of the suite
     if (config.use_tap) {
         printf("TAP version 13\n1..%i\n", test_count);
     } else {
@@ -244,6 +289,17 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
 #define __BDD_COUNT_ARGS__(...) __BDD_PATTERN_MATCH__(__VA_ARGS__,_,_,_,_,_,_,_,_,_,ONE__)
 #define __BDD_PATTERN_MATCH__(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N, ...) N
 
+void __bdd_sprintf__(char* buffer, const char* fmt, const char* message) {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // _CRT_SECURE_NO_WARNINGS
+#endif
+    sprintf(buffer, fmt, message);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+}
+
 #define __BDD_CHECK__(condition, ...) if (!(condition))\
 {\
     const char* message = __bdd_format__(__VA_ARGS__);\
@@ -251,12 +307,16 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
         (__BDD_COLOR_RED__ "Check failed: %s" __BDD_COLOR_RESET__ ) :\
         "Check failed: %s";\
     __bdd_config__->error = malloc(sizeof(char) * (strlen(fmt) + strlen(message) + 1));\
-    sprintf(__bdd_config__->error, fmt, message);\
+    __bdd_sprintf__(__bdd_config__->error, fmt, message);\
     return;\
 }
+
 #define __BDD_CHECK_ONE__(condition) __BDD_CHECK__(condition, #condition)
 
 #define check(...) __BDD_MACRO__(__BDD_CHECK_, __VA_ARGS__)
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif //BDD_FOR_C_H

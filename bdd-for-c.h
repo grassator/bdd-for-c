@@ -275,6 +275,8 @@ if (__bdd_config__->run == __BDD_INIT_RUN__) {\
     __bdd_config__->test_list[++__bdd_config__->test_index] = 0;\
 } else if (__bdd_config__->run == __BDD_TEST_RUN__ && __bdd_config__->test_index-- == 0)
 
+#define context(name)
+for(int)
 
 #define before_each() if (__bdd_config__->run == __BDD_BEFORE_EACH_RUN__)
 #define after_each() if (__bdd_config__->run == __BDD_AFTER_EACH_RUN__)

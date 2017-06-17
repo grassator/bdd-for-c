@@ -84,13 +84,13 @@ __bdd_array__* __bdd_array_create__() {
     return arr;
 }
 
-__bdd_array__* __bdd_array_push__(__bdd_array__ *arr, void *item) {
+void* __bdd_array_push__(__bdd_array__ *arr, void *item) {
     if (arr->size == arr->capacity) {
         arr->capacity *= 2;
         arr->values = realloc(arr->values, sizeof(void *) * arr->capacity);
     }
     arr->values[arr->size++] = item;
-    return arr;
+    return item;
 }
 
 void* __bdd_array_last__(__bdd_array__ *arr) {
@@ -114,8 +114,21 @@ void __bdd_array_free__(__bdd_array__ *arr) {
     free(arr);
 }
 
+typedef enum __bdd_node_type__ {
+    __BDD_NODE_GROUP__ = 1,
+    __BDD_NODE_TEST__ = 2,
+    __BDD_NODE_INTERIM__ = 3
+} __bdd_node_type__;
+
+typedef struct __bdd_test_step__ {
+    size_t level;
+    char* name;
+    __bdd_node_type__ type;
+} __bdd_test_step__;
+
 typedef struct __bdd_node__ {
     char*  name;
+    __bdd_node_type__ type;
     __bdd_array__*  list_before;
     __bdd_array__*  list_after;
     __bdd_array__*  list_before_each;
@@ -123,9 +136,18 @@ typedef struct __bdd_node__ {
     __bdd_array__*  list_children;
 } __bdd_node__;
 
-__bdd_node__ * __bdd_node_create__(char *name) {
+__bdd_test_step__ * __bdd_test_step_create__(size_t level, __bdd_node__ * node) {
+    __bdd_test_step__ * step = malloc(sizeof(__bdd_test_step__));
+    step->level = level;
+    step->type = node->type;
+    step->name = node->name;
+    return step;
+}
+
+__bdd_node__ * __bdd_node_create__(char *name, __bdd_node_type__ type) {
     __bdd_node__ * n = malloc(sizeof(__bdd_node__));
     n->name = name;
+    n->type = type;
     n->list_before = __bdd_array_create__();
     n->list_after = __bdd_array_create__();
     n->list_before_each = __bdd_array_create__();
@@ -139,44 +161,50 @@ bool __bdd_node_is_leaf__(__bdd_node__ * node) {
 }
 
 void __bdd_node_flatten_internal__(
-    __bdd_node__ * node, __bdd_array__ * names, __bdd_array__ * before_each_lists, __bdd_array__ * after_each_lists
+    size_t level,
+    __bdd_node__ * node,
+    __bdd_array__ * steps,
+    __bdd_array__ * before_each_lists,
+    __bdd_array__ * after_each_lists
 ) {
     if (__bdd_node_is_leaf__(node)) {
 
         for (size_t listIndex = 0; listIndex < before_each_lists->size; ++listIndex) {
             __bdd_array__ *list = before_each_lists->values[listIndex];
             for (size_t i = 0; i < list->size; ++i) {
-                __bdd_array_push__(names, ((__bdd_node__ *) list->values[i])->name);
+                __bdd_array_push__(steps, __bdd_test_step_create__(level, list->values[i]));
             }
         }
 
-        __bdd_array_push__(names, node->name);
+        __bdd_array_push__(steps, __bdd_test_step_create__(level, node));
 
         for (size_t listIndex = 0; listIndex < after_each_lists->size; ++listIndex) {
             __bdd_array__ *list = after_each_lists->values[listIndex];
             for (size_t i = 0; i < list->size; ++i) {
-                __bdd_array_push__(names, ((__bdd_node__ *) list->values[i])->name);
+                __bdd_array_push__(steps, __bdd_test_step_create__(level, list->values[i]));
             }
         }
         return;
     }
 
     for (size_t i = 0; i < node->list_before->size; ++i) {
-        __bdd_array_push__(names, ((__bdd_node__ *) node->list_before->values[i])->name);
+        __bdd_array_push__(steps, __bdd_test_step_create__(level, node->list_before->values[i]));
     }
 
     __bdd_array_push__(before_each_lists, node->list_before_each);
     __bdd_array_push__(after_each_lists, node->list_after_each);
 
+    __bdd_array_push__(steps, __bdd_test_step_create__(level, node));
+
     for (size_t i = 0; i < node->list_children->size; ++i) {
-        __bdd_node_flatten_internal__(node->list_children->values[i], names, before_each_lists, after_each_lists);
+        __bdd_node_flatten_internal__(level + 1, node->list_children->values[i], steps, before_each_lists, after_each_lists);
     }
 
     __bdd_array_pop__(before_each_lists);
     __bdd_array_pop__(after_each_lists);
 
     for (size_t i = 0; i < node->list_after->size; ++i) {
-        __bdd_array_push__(names, ((__bdd_node__ *) node->list_after->values[i])->name);
+        __bdd_array_push__(steps, __bdd_test_step_create__(level, node->list_after->values[i]));
     }
 }
 
@@ -185,18 +213,31 @@ __bdd_array__ * __bdd_node_flatten__(__bdd_node__ * node, __bdd_array__ * names)
         return names;
     }
 
-    __bdd_node_flatten_internal__(node, names, __bdd_array_create__(), __bdd_array_create__());
+    __bdd_node_flatten_internal__(0, node, names, __bdd_array_create__(), __bdd_array_create__());
 
     return names;
 }
 
+void __bdd_node_free__(__bdd_node__ * n);
+
+void __bdd_node_free_list__(__bdd_array__ * list) {
+    for (size_t i = 0; i < list->size; ++i) {
+        __bdd_node_free__(list->values[i]);
+    }
+    __bdd_array_free__(list);
+}
+
+void __bdd_node_free__(__bdd_node__ * n) {
+    __bdd_node_free_list__(n->list_before);
+    __bdd_node_free_list__(n->list_after);
+    __bdd_node_free_list__(n->list_before_each);
+    __bdd_node_free_list__(n->list_after_each);
+    __bdd_node_free_list__(n->list_children);
+}
+
 enum __bdd_run_type__ {
     __BDD_INIT_RUN__ = 1,
-    __BDD_TEST_RUN__ = 2,
-    __BDD_BEFORE_EACH_RUN__ = 3,
-    __BDD_AFTER_EACH_RUN__ = 4,
-    __BDD_BEFORE_RUN__ = 5,
-    __BDD_AFTER_RUN__ = 6
+    __BDD_TEST_RUN__ = 2
 };
 
 typedef struct __bdd_config_type__ {
@@ -204,7 +245,7 @@ typedef struct __bdd_config_type__ {
     size_t test_index;
     size_t test_tap_index;
     size_t failed_test_count;
-    char * current_test;
+    __bdd_test_step__ * current_test;
     __bdd_array__* node_stack;
     char* error;
     bool use_color;
@@ -214,15 +255,23 @@ typedef struct __bdd_config_type__ {
 char* __bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__* __bdd_config__);
 
-bool __bdd_is_internal_step__(char * step) {
-    return strlen(step) > 2 && step[0] == '-' && step[1] == '-';
-}
-
 void __bdd_run__(__bdd_config_type__* config) {
-    char *name = config->current_test;
+    __bdd_test_step__ *step = config->current_test;
     __bdd_test_main__(config);
 
-    if (__bdd_is_internal_step__(name)) {
+    if (step->type == __BDD_NODE_GROUP__ && !config->use_tap) {
+        for (size_t i = 0; i < step->level; ++i) {
+            printf("  ");
+        }
+        printf(
+            "%s%s%s\n",
+            config->use_color ? __BDD_COLOR_BOLD__ : "",
+            step->name,
+            config->use_color ? __BDD_COLOR_RESET__ : ""
+        );
+    }
+
+    if (step->type != __BDD_NODE_TEST__) {
         return;
     }
 
@@ -233,11 +282,14 @@ void __bdd_run__(__bdd_config_type__* config) {
             if (config->use_tap) {
                 // We only to report tests and not setup / teardown success
                 if (config->test_tap_index) {
-                    printf("ok %zu - %s\n", config->test_tap_index, name);
+                    printf("ok %zu - %s\n", config->test_tap_index, step->name);
                 }
             } else {
+                for (size_t i = 0; i < step->level; ++i) {
+                    printf("  ");
+                }
                 printf(
-                    "  %s %s(OK)%s\n", name,
+                    "%s %s(OK)%s\n", step->name,
                     config->use_color ? __BDD_COLOR_GREEN__ : "",
                     config->use_color ? __BDD_COLOR_RESET__ : ""
                 );
@@ -248,15 +300,21 @@ void __bdd_run__(__bdd_config_type__* config) {
         if (config->use_tap) {
             // We only to report tests and not setup / teardown errors
             if (config->test_tap_index) {
-                printf("not ok %zu - %s\n", config->test_tap_index, name);
+                printf("not ok %zu - %s\n", config->test_tap_index, step->name);
             }
         } else {
+            for (size_t i = 0; i < step->level; ++i) {
+                printf("  ");
+            }
             printf(
-                "  %s %s(FAIL)%s\n", name,
+                "%s %s(FAIL)%s\n", step->name,
                 config->use_color ? __BDD_COLOR_RED__ : "",
                 config->use_color ? __BDD_COLOR_RESET__ : ""
             );
-            printf("    %s\n", config->error);
+            for (size_t i = 0; i < step->level + 1; ++i) {
+                printf("  ");
+            }
+            printf("%s\n", config->error);
         }
         free(config->error);
         config->error = NULL;
@@ -332,18 +390,19 @@ int main(void) {
         config.use_color = 1;
     }
 
-    __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__));
+    __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__, __BDD_NODE_GROUP__));
 
     // During the first run we just gather the
     // count of the tests and their descriptions
     __bdd_test_main__(&config);
 
-    __bdd_array__ * names = __bdd_array_create__();
-    __bdd_node_flatten__(config.node_stack->values[0], names);
+    __bdd_array__ * steps = __bdd_array_create__();
+    __bdd_node_flatten__(config.node_stack->values[0], steps);
 
     size_t test_count = 0;
-    for (size_t i = 0; i < names->size; ++i) {
-        if(!__bdd_is_internal_step__(names->values[i])) {
+    for (size_t i = 0; i < steps->size; ++i) {
+        __bdd_test_step__ * step = steps->values[i];
+        if(step->type == __BDD_NODE_TEST__) {
             ++test_count;
         }
     }
@@ -352,27 +411,29 @@ int main(void) {
     if (config.use_tap) {
         printf("TAP version 13\n1..%zu\n", test_count);
     } else {
-        printf(
-            "%s%s%s\n",
-            config.use_color ? __BDD_COLOR_BOLD__ : "",
-            __bdd_spec_name__,
-            config.use_color ? __BDD_COLOR_RESET__ : ""
-        );
+//        printf(
+//            "%s%s%s\n",
+//            config.use_color ? __BDD_COLOR_BOLD__ : "",
+//            __bdd_spec_name__,
+//            config.use_color ? __BDD_COLOR_RESET__ : ""
+//        );
     }
 
     config.run = __BDD_TEST_RUN__;
 
-    for (size_t i = 0; i < names->size; ++i) {
+    for (size_t i = 0; i < steps->size; ++i) {
+        __bdd_test_step__ * step = steps->values[i];
+        __bdd_node_free__(config.node_stack->values[0]);
         config.node_stack->size = 0;
-        __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__));
-        config.current_test = names->values[i];
+        __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__, __BDD_NODE_GROUP__));
+        config.current_test = step;
         __bdd_run__(&config);
     }
 
     if (config.failed_test_count > 0) {
         if (!config.use_tap) {
             printf(
-                "\n  %zu test%s run, %zu failed.\n",
+                "\n%zu test%s run, %zu failed.\n",
                 test_count, test_count == 1 ? "" : "s", config.failed_test_count
             );
         }
@@ -388,20 +449,20 @@ void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
 
 #define __BDD_LAST_NODE__ ((__bdd_node__ *) __bdd_array_last__(__bdd_config__->node_stack))
 
-#define __BDD_STEP__(node_list, name)\
+#define __BDD_STEP__(node_list, node_name, type)\
 for(\
     void * __bdd_index__ = 0,\
-         * __bdd_node_name__ = (name);\
+         * __bdd_node_name__ = (node_name);\
     (\
         (\
             __bdd_config__->run == __BDD_INIT_RUN__ &&\
-            __bdd_array_push__((node_list), __bdd_node_create__(__bdd_node_name__)) &&\
+            __bdd_array_push__((node_list), __bdd_node_create__(__bdd_node_name__, (type))) &&\
             false \
         ) || \
         (\
             __bdd_config__->run == __BDD_TEST_RUN__ &&\
             (int) __bdd_index__ < 1 &&\
-            __bdd_same_string__(__bdd_node_name__, __bdd_config__->current_test)\
+            __bdd_same_string__(__bdd_node_name__, __bdd_config__->current_test->name)\
         )\
     );\
     ++__bdd_index__\
@@ -409,27 +470,46 @@ for(\
 
 #define it(name) __BDD_STEP__(\
   __BDD_LAST_NODE__->list_children,\
-  name\
+  name,\
+  __BDD_NODE_TEST__\
 )
 
 #define before_each() __BDD_STEP__(\
   __BDD_LAST_NODE__->list_before_each,\
-  __bdd_format__("--before-each-%i", __BDD_LAST_NODE__->list_before_each->size)\
+  __bdd_format__("--before-each-%i", __BDD_LAST_NODE__->list_before_each->size),\
+  __BDD_NODE_INTERIM__\
 )
 
 #define after_each() __BDD_STEP__(\
   __BDD_LAST_NODE__->list_after_each,\
-  __bdd_format__("--after-each-%i", __BDD_LAST_NODE__->list_after_each->size)\
+  __bdd_format__("--after-each-%i", __BDD_LAST_NODE__->list_after_each->size),\
+  __BDD_NODE_INTERIM__\
 )
 
 #define before() __BDD_STEP__(\
   __BDD_LAST_NODE__->list_before,\
-  __bdd_format__("--before-%i", __BDD_LAST_NODE__->list_before->size)\
+  __bdd_format__("--before-%i", __BDD_LAST_NODE__->list_before->size),\
+  __BDD_NODE_INTERIM__\
 )
 
 #define after() __BDD_STEP__(\
   __BDD_LAST_NODE__->list_after,\
-  __bdd_format__("--after-%i", __BDD_LAST_NODE__->list_after->size)\
+  __bdd_format__("--after-%i", __BDD_LAST_NODE__->list_after->size),\
+  __BDD_NODE_INTERIM__\
+)
+
+#define describe(name)\
+for(\
+    void * __bdd_index__ = 0,\
+         * __bdd_node_name__ = (name),\
+         * __bdd_ignore_node__ = __bdd_node_create__(__bdd_node_name__, __BDD_NODE_GROUP__),\
+         * __bdd_ignore_child__ = __bdd_array_push__(__BDD_LAST_NODE__->list_children, __bdd_ignore_node__),\
+         * __bdd_ignore_stack__ = __bdd_array_push__(__bdd_config__->node_stack, __bdd_ignore_node__)\
+    ;\
+    (\
+        (int) __bdd_index__ < 1 \
+    );\
+    ++__bdd_index__, __bdd_array_pop__(__bdd_config__->node_stack) \
 )
 
 
@@ -455,7 +535,7 @@ void __bdd_sprintf__(char* buffer, const char* fmt, const char* message) {
 {\
     const char* message = __bdd_format__(__VA_ARGS__);\
     const char* fmt = __bdd_config__->use_color ?\
-        (__BDD_COLOR_RED__ "Check failed: %s" __BDD_COLOR_RESET__ ) :\
+        (__BDD_COLOR_RED__ "Check failed:" __BDD_COLOR_RESET__ " %s" ) :\
         "Check failed: %s";\
     __bdd_config__->error = malloc(sizeof(char) * (strlen(fmt) + strlen(message) + 1));\
     __bdd_sprintf__(__bdd_config__->error, fmt, message);\

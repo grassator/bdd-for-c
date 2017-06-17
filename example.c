@@ -12,14 +12,20 @@ spec("some feature") {
         b = 3;
     }
 
-    it("should not work") {
-        a = 2;
-        b = 2;
-        check(a + b == 6, "Adding %i to %i did not equal %i", a, b, 6);
+    describe("sub-feature 1") {
+        it("should not work") {
+            a = 2;
+            b = 2;
+            check(a + b == 6, "Adding %i to %i did not equal %i", a, b, 6);
+        }
     }
 
-    it("should work") {
-        check(a + b == 6);
+    describe("sub-feature 2") {
+        describe("sub-sub-feature") {
+            it("should work") {
+                check(a + b == 6);
+            }
+        }
     }
 
     before_each() {

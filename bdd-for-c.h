@@ -105,6 +105,82 @@ void __bdd_array_free__(__bdd_array__ *arr) {
     free(arr);
 }
 
+typedef struct __bdd_node__ {
+    char*  name;
+    __bdd_array__*  list_before;
+    __bdd_array__*  list_after;
+    __bdd_array__*  list_before_each;
+    __bdd_array__*  list_after_each;
+    __bdd_array__*  list_children;
+} __bdd_node__;
+
+__bdd_node__ * __bdd_node_create__(char *name) {
+    __bdd_node__ * n = malloc(sizeof(__bdd_node__));
+    n->name = name;
+    n->list_before = __bdd_array_create__();
+    n->list_after = __bdd_array_create__();
+    n->list_before_each = __bdd_array_create__();
+    n->list_after_each = __bdd_array_create__();
+    n->list_children = __bdd_array_create__();
+    return n;
+}
+
+bool __bdd_node_is_leaf__(__bdd_node__ * node) {
+    return node->list_children->size == 0;
+}
+
+void __bdd_node_flatten_internal__(
+    __bdd_node__ * node, __bdd_array__ * names, __bdd_array__ * before_each_lists, __bdd_array__ * after_each_lists
+) {
+    if (__bdd_node_is_leaf__(node)) {
+
+        for (size_t listIndex = 0; listIndex < before_each_lists->size; ++listIndex) {
+            __bdd_array__ *list = before_each_lists->values[listIndex];
+            for (size_t i = 0; i < list->size; ++i) {
+                __bdd_array_push__(names, ((__bdd_node__ *) list->values[i])->name);
+            }
+        }
+
+        __bdd_array_push__(names, node->name);
+
+        for (size_t listIndex = 0; listIndex < after_each_lists->size; ++listIndex) {
+            __bdd_array__ *list = after_each_lists->values[listIndex];
+            for (size_t i = 0; i < list->size; ++i) {
+                __bdd_array_push__(names, ((__bdd_node__ *) list->values[i])->name);
+            }
+        }
+        return;
+    }
+
+    for (size_t i = 0; i < node->list_before->size; ++i) {
+        __bdd_array_push__(names, ((__bdd_node__ *) node->list_before->values[i])->name);
+    }
+
+    __bdd_array_push__(before_each_lists, node->list_before_each);
+    __bdd_array_push__(after_each_lists, node->list_after_each);
+
+    for (size_t i = 0; i < node->list_children->size; ++i) {
+        __bdd_node_flatten_internal__(node->list_children->values[i], names, before_each_lists, after_each_lists);
+    }
+
+    __bdd_array_pop__(before_each_lists);
+    __bdd_array_pop__(after_each_lists);
+
+    for (size_t i = 0; i < node->list_after->size; ++i) {
+        __bdd_array_push__(names, ((__bdd_node__ *) node->list_after->values[i])->name);
+    }
+}
+
+__bdd_array__ * __bdd_node_flatten__(__bdd_node__ * node, __bdd_array__ * names) {
+    if (node == NULL) {
+        return names;
+    }
+
+    __bdd_node_flatten_internal__(node, names, __bdd_array_create__(), __bdd_array_create__());
+
+    return names;
+}
+
 enum __bdd_run_type__ {
     __BDD_INIT_RUN__ = 1,
     __BDD_TEST_RUN__ = 2,
@@ -120,12 +196,13 @@ typedef struct __bdd_config_type__ {
     size_t test_tap_index;
     size_t failed_test_count;
     __bdd_array__* test_list;
+    __bdd_array__* node_stack;
     char* error;
     bool use_color;
     bool use_tap;
 } __bdd_config_type__;
 
-const char* __bdd_spec_name__;
+char* __bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__* __bdd_config__);
 
 void __bdd_run__(__bdd_config_type__* config, char* name) {
@@ -221,6 +298,7 @@ int main(void) {
         .test_tap_index = 0,
         .failed_test_count = 0,
         .test_list = __bdd_array_create__(),
+        .node_stack = __bdd_array_create__(),
         .error = NULL,
         .use_color = 0,
         .use_tap = 0
@@ -234,6 +312,8 @@ int main(void) {
     if (!config.use_tap && BDD_USE_COLOR && __BDD_IS_ATTY__() && __bdd_is_supported_term__()) {
         config.use_color = 1;
     }
+
+    __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__));
 
     // During the first run we just gather the
     // count of the tests and their descriptions
@@ -288,35 +368,47 @@ int main(void) {
 }
 
 #define spec(name) \
-const char* __bdd_spec_name__ = (name);\
+char* __bdd_spec_name__ = (name);\
 void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
+
+#define __BDD_LAST_NODE__ ((__bdd_node__ *) __bdd_array_last__(__bdd_config__->node_stack))
 
 #define it(name)\
 for(\
     size_t __bdd_index__ = 0,\
         __bdd_ignore_pre_run__ = __bdd_config__->run == __BDD_INIT_RUN__ &&\
-            __bdd_array_push__(__bdd_config__->test_list, name)\
+            __bdd_array_push__(__bdd_config__->test_list, (name)) \
     ;\
     (\
+        (\
+            __bdd_config__->run == __BDD_INIT_RUN__ &&\
+            __bdd_array_push__(__BDD_LAST_NODE__->list_children, __bdd_node_create__(name)) &&\
+            false \
+        ) || \
         __bdd_config__->run == __BDD_TEST_RUN__ && __bdd_index__ < 1 &&\
         __bdd_config__->test_index-- == 0\
     );\
     ++__bdd_index__\
 )
 
-#define __BDD_STEP__(run_type)\
+#define __BDD_STEP__(run_type, node_list, fmt)\
 for(\
-    size_t __bdd_index__ = 0;\
+    void * __bdd_index__ = 0;\
     (\
-        __bdd_config__->run == (run_type) && __bdd_index__ < 1\
+        (\
+            __bdd_config__->run == __BDD_INIT_RUN__ &&\
+            __bdd_array_push__((node_list), __bdd_node_create__(__bdd_format__((fmt), (node_list)->size))) &&\
+            false \
+        ) || \
+        (__bdd_config__->run == (run_type) && (int) __bdd_index__ < 1)\
     );\
     ++__bdd_index__\
 )
 
-#define before_each() __BDD_STEP__(__BDD_BEFORE_EACH_RUN__)
-#define after_each() __BDD_STEP__(__BDD_AFTER_EACH_RUN__)
-#define before() __BDD_STEP__(__BDD_BEFORE_RUN__)
-#define after() __BDD_STEP__(__BDD_AFTER_RUN__)
+#define before_each() __BDD_STEP__(__BDD_BEFORE_EACH_RUN__, __BDD_LAST_NODE__->list_before_each, "-before-each-%i")
+#define after_each() __BDD_STEP__(__BDD_AFTER_EACH_RUN__, __BDD_LAST_NODE__->list_after_each, "-after-each-%i")
+#define before() __BDD_STEP__(__BDD_BEFORE_RUN__, __BDD_LAST_NODE__->list_before, "-before-%i")
+#define after() __BDD_STEP__(__BDD_AFTER_RUN__, __BDD_LAST_NODE__->list_after, "-after-%i")
 
 
 #define __BDD_MACRO__(M, ...) __BDD_OVERLOAD__(M, __BDD_COUNT_ARGS__(__VA_ARGS__)) (__VA_ARGS__)

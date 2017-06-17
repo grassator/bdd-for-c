@@ -24,12 +24,12 @@ spec("some feature") {
     }
 
     describe("sub-feature 2") {
-        before_each() {
-            a = 2;
-        }
-        describe("sub-sub-feature") {
-            it("should not work") {
-                check(a + b == 6, "Adding %i to %i did not equal %i", a, b, 6);
+        context("when a is set to 2") {
+            before_each() {
+                a = 2;
+            }
+            it("should equal to 5") {
+                check(a + b == 5);
             }
         }
     }

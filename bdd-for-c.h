@@ -539,6 +539,9 @@ for(\
     ++__bdd_index__, __bdd_array_pop__(__bdd_config__->node_stack) \
 )
 
+#ifndef BDD_NO_CONTEXT_KEYWORD
+#define context(name) describe(name)
+#endif
 
 #define __BDD_MACRO__(M, ...) __BDD_OVERLOAD__(M, __BDD_COUNT_ARGS__(__VA_ARGS__)) (__VA_ARGS__)
 #define __BDD_OVERLOAD__(macro_name, suffix) __BDD_EXPAND_OVERLOAD__(macro_name, suffix)

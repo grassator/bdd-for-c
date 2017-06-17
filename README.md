@@ -16,7 +16,7 @@ Then create a spec file, say named `strcmp_spec.c`, with some tests and the incl
 #include <string.h>
 #include "bdd-for-c.h"
 
-describe("strcmp") {
+spec("strcmp") {
 
     static const char* test_string = "foo";
 
@@ -59,7 +59,7 @@ In order for the testing to be truly useful it needs to be really easy to setup 
  
 Unfortunately all of the existing frameworks, inspected before starting this project, lacked one more of the features mentioned above, with the most common problem being BASIC-style `BEGIN` / `END` delimiters for test, like in [CSpec framework](https://github.com/arnaudbrejeon/cspec/wiki). The issue with `BEGIN` / `END` delimiters is not just that it "doesn't look like C", but also that it makes a different typing flow and screws up IDE auto-completion support.
 
-The framework is currently exclusively targeting the model of "one describe"—"one executable", as this is the model providing fastest compile times (given a correctly structured project), and making mocking much easier.
+The framework is currently exclusively targeting the model of "one spec"—"one executable", as this is the model providing fastest compile times (given a correctly structured project), and making mocking much easier.
 
 
 ## Handling State and Fixtures
@@ -74,7 +74,7 @@ Here's how it all fits together:
 #include <stdio.h>
 #include "bdd-for-c.h"
 
-describe("some feature") {
+spec("some feature") {
 
     static int test_count;
     static int tests_failed;
@@ -152,7 +152,7 @@ These macros are implemented to be syntactically identical to built-in statement
 ```c
 #include "bdd-for-c.h"
 
-describe('statements') {
+spec('statements') {
     it("should not do anything");
     it("should be in short form") check(1 + 1 = 2);
     it("should be have a code block") {
@@ -163,15 +163,15 @@ describe('statements') {
 
 Also same as with the built-in statements, you have to maintain a certain structure, that will be mentioned where appropriate in the subsections below.
 
-### describe
+### spec
 
-`describe` must be a top-level statement and there must be exactly one `describe` statement in the test executable. Trying to add more than one will result in a compilation error.
+`spec` must be a top-level statement and there must be exactly one `spec` statement in the test executable. Trying to add more than one will result in a compilation error.
 
-`describe("some functionality")` is used to group a set of expectations and setup / teardown code together and give it a name (in this case "some functionality"), that will be used for test reporting.
+`spec("some functionality")` is used to group a set of expectations and setup / teardown code together and give it a name (in this case "some functionality"), that will be used for test reporting.
 
 ### it
 
-`it` statements must be included directly inside of the `describe` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
+`it` statements must be included directly inside of the `spec` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
 
 The `it` statement is basic structural block of the spec and is used to need a particular expectation, that is validated using `check` statements described below.
 
@@ -182,7 +182,7 @@ The `it` statement is basic structural block of the spec and is used to need a p
 ```c
 #include "bdd-for-c.h"
 
-describe("natural number") {
+spec("natural number") {
     it("should be non-negative") {
         for (int i = 0; i < 10; ++i) {
             check(i > 0);
@@ -216,22 +216,22 @@ While `check` statements are mostly useful inside of `it` statements, you can al
 
 ### before
 
-`before()` statements, if needed, must be included directly inside of the `describe` statement. This statement is run once before any of the `it` statements and can useful to setup some state. There can be as many `before()` statements as necessary, however you will rarely need more than one.
+`before()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run once before any of the `it` statements and can useful to setup some state. There can be as many `before()` statements as necessary, however you will rarely need more than one.
 
 
 ### after
 
-`after()` statements, if needed, must be included directly inside of the `describe` statement. This statement is run once after any of the `it` statements and can useful to teardown some state. There can be as many `after()` statements as necessary, however you will rarely need more than one.
+`after()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run once after any of the `it` statements and can useful to teardown some state. There can be as many `after()` statements as necessary, however you will rarely need more than one.
 
 
 ### before_each
 
-`before_each()` statements, if needed, must be included directly inside of the `describe` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `before_each()` statements as necessary, however you will rarely need more than one.
+`before_each()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `before_each()` statements as necessary, however you will rarely need more than one.
 
 
 ### after_each
 
-`after_each()` statements, if needed, must be included directly inside of the `describe` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `after_each()` statements as necessary, however you will rarely need more than one.
+`after_each()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `after_each()` statements as necessary, however you will rarely need more than one.
 
 
 ## License

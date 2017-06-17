@@ -1,6 +1,6 @@
 #include "bdd-for-c.h"
 
-describe("some feature") {
+spec("some feature") {
 
     // These variable definitions must be static because each test
     // section (it / before / etc...) is a separate function call

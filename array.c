@@ -1,7 +1,7 @@
 #include "bdd-for-c.h"
 #include "array.h"
 
-describe("array") {
+spec("array") {
 
     static _bdd_array* arr;
 

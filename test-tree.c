@@ -10,7 +10,7 @@ bool _bdd_same_string(const char* str1, const char* str2) {
     return strncmp(str1, str2, str1length) == 0;
 }
 
-describe("test tree") {
+spec("test tree") {
     it("should allow to create a node") {
         _bdd_node *n = _bdd_node_create("foo");
         check(strcmp(n->name, "foo") == 0);

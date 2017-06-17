@@ -125,7 +125,7 @@ typedef struct __bdd_config_type__ {
     bool use_tap;
 } __bdd_config_type__;
 
-const char* __bdd_describe_name__;
+const char* __bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__* __bdd_config__);
 
 void __bdd_run__(__bdd_config_type__* config, char* name) {
@@ -248,7 +248,7 @@ int main(void) {
         printf(
             "%s%s%s\n",
             config.use_color ? __BDD_COLOR_BOLD__ : "",
-            __bdd_describe_name__,
+            __bdd_spec_name__,
             config.use_color ? __BDD_COLOR_RESET__ : ""
         );
     }
@@ -287,8 +287,8 @@ int main(void) {
     return 0;
 }
 
-#define describe(name) \
-const char* __bdd_describe_name__ = (name);\
+#define spec(name) \
+const char* __bdd_spec_name__ = (name);\
 void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
 
 

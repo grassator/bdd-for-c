@@ -105,12 +105,16 @@ spec("some feature") {
         --tests_failed;
     }
 
-    it("should not be equal") {
-        check(3 + 2 != 6, "wrong math!");
+    describe("broken math") {
+        it("should not be equal") {
+            check(3 + 2 != 6, "this is indeed broken!");
+        }
     }
 
-    it("should work") {
-        check(3 + 3 == 6, "wrong math!");
+    context("when everything is right") {
+        it("should work") {
+            check(3 + 3 == 6);
+        }
     }
 }
 ```
@@ -171,9 +175,22 @@ Also same as with the built-in statements, you have to maintain a certain struct
 
 ### it
 
-`it` statements must be included directly inside of the `spec` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
+`it` statements must be included directly inside of the `spec`, `describe` or `context` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
 
 The `it` statement is basic structural block of the spec and is used to need a particular expectation, that is validated using `check` statements described below.
+
+### describe
+
+`describe` statements must be included directly inside of the `spec`, `context`, or another `describe` statement.
+
+The `describe` is used to group certain `it` statements together, usually based on the fact that they belong to the same functionality or happen in the same state.
+
+### context
+
+`context` statement is completely equivalent to `describe` in it's usage and should be used when it better conveys the topic of the group of tests.
+
+> NOTE: since `context` is a quite common global variable in C application, it is possible to not expose it, by setting a flag:
+ `#define BDD_NO_CONTEXT_KEYWORD 1` before do you `#include "bdd-for-c.h"`
 
 ### check
 
@@ -216,22 +233,22 @@ While `check` statements are mostly useful inside of `it` statements, you can al
 
 ### before
 
-`before()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run once before any of the `it` statements and can useful to setup some state. There can be as many `before()` statements as necessary, however you will rarely need more than one.
+`before()` statements, if needed, must be included directly inside of the `spec`, `describe` or `context` statement. This statement is run once before any of the `it` statements in the group/spec and can be useful to setup some state. There can be as many `before()` statements as necessary, however you will rarely need more than one.
 
 
 ### after
 
-`after()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run once after any of the `it` statements and can useful to teardown some state. There can be as many `after()` statements as necessary, however you will rarely need more than one.
+`after()` statements, if needed, must be included directly inside of the `spec`, `describe` or `context` statement. This statement is run once after any of the `it` statements in the group/spec and can be useful to teardown some state. There can be as many `after()` statements as necessary, however you will rarely need more than one.
 
 
 ### before_each
 
-`before_each()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `before_each()` statements as necessary, however you will rarely need more than one.
+`before_each()` statements, if needed, must be included directly inside of the `spec`, `describe` or `context` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `before_each()` statements as necessary, however you will rarely need more than one.
 
 
 ### after_each
 
-`after_each()` statements, if needed, must be included directly inside of the `spec` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `after_each()` statements as necessary, however you will rarely need more than one.
+`after_each()` statements, if needed, must be included directly inside of the `spec`, `describe` or `context` statement. This statement is run before each of the `it` statements and can useful to setup some state. There can be as many `after_each()` statements as necessary, however you will rarely need more than one.
 
 
 ## License

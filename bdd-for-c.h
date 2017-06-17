@@ -61,6 +61,50 @@ SOFTWARE.
 #define __BDD_COLOR_GREEN__       "\x1B[32m"             /* Green */
 #define __BDD_COLOR_BOLD__        "\x1B[1m"              /* Bold White */
 
+typedef struct __bdd_array__ {
+    void ** values;
+    size_t capacity;
+    size_t size;
+} __bdd_array__;
+
+__bdd_array__* __bdd_array_create__() {
+    __bdd_array__ *arr = malloc(sizeof(__bdd_array__));
+    arr->capacity = 4;
+    arr->size = 0;
+    arr->values = calloc(arr->capacity, sizeof(void *));
+    return arr;
+}
+
+__bdd_array__* __bdd_array_push__(__bdd_array__ *arr, void *item) {
+    if (arr->size == arr->capacity) {
+        arr->capacity *= 2;
+        arr->values = realloc(arr->values, sizeof(void *) * arr->capacity);
+    }
+    arr->values[arr->size++] = item;
+    return arr;
+}
+
+void* __bdd_array_last__(__bdd_array__ *arr) {
+    if (arr->size == 0) {
+        return NULL;
+    }
+    return arr->values[arr->size - 1];
+}
+
+void* __bdd_array_pop__(__bdd_array__ *arr) {
+    if (arr->size == 0) {
+        return NULL;
+    }
+    void* result = arr->values[arr->size - 1];
+    --arr->size;
+    return result;
+}
+
+void __bdd_array_free__(__bdd_array__ *arr) {
+    free(arr->values);
+    free(arr);
+}
+
 enum __bdd_run_type__ {
     __BDD_INIT_RUN__ = 1,
     __BDD_TEST_RUN__ = 2,
@@ -72,14 +116,13 @@ enum __bdd_run_type__ {
 
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
-    unsigned int test_index;
-    unsigned int test_tap_index;
-    unsigned int failed_test_count;
-    size_t test_list_size;
-    char** test_list;
+    size_t test_index;
+    size_t test_tap_index;
+    size_t failed_test_count;
+    __bdd_array__* test_list;
     char* error;
-    unsigned int use_color;
-    unsigned int use_tap;
+    bool use_color;
+    bool use_tap;
 } __bdd_config_type__;
 
 const char* __bdd_describe_name__;
@@ -93,7 +136,7 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
             if (config->use_tap) {
                 // We only to report tests and not setup / teardown success
                 if (config->test_tap_index) {
-                    printf("ok %i - %s\n", config->test_tap_index, name);
+                    printf("ok %zu - %s\n", config->test_tap_index, name);
                 }
             } else {
                 printf(
@@ -108,7 +151,7 @@ void __bdd_run__(__bdd_config_type__* config, char* name) {
         if (config->use_tap) {
             // We only to report tests and not setup / teardown errors
             if (config->test_tap_index) {
-                printf("not ok %i - %s\n", config->test_tap_index, name);
+                printf("not ok %zu - %s\n", config->test_tap_index, name);
             }
         } else {
             printf(
@@ -177,8 +220,7 @@ int main(void) {
         .test_index = 0,
         .test_tap_index = 0,
         .failed_test_count = 0,
-        .test_list_size = 8,
-        .test_list = NULL,
+        .test_list = __bdd_array_create__(),
         .error = NULL,
         .use_color = 0,
         .use_tap = 0
@@ -195,14 +237,13 @@ int main(void) {
 
     // During the first run we just gather the
     // count of the tests and their descriptions
-    config.test_list = malloc(sizeof(char*) * config.test_list_size);
     __bdd_test_main__(&config);
 
-    const unsigned int test_count = config.test_index;
+    const size_t test_count = config.test_list->size;
 
     // Outputting the name of the suite
     if (config.use_tap) {
-        printf("TAP version 13\n1..%i\n", test_count);
+        printf("TAP version 13\n1..%zu\n", test_count);
     } else {
         printf(
             "%s%s%s\n",
@@ -215,7 +256,7 @@ int main(void) {
     config.run = __BDD_BEFORE_RUN__;
     __bdd_run__(&config, "before");
 
-    for (unsigned int i = 0; config.test_list[i]; ++i) {
+    for (size_t i = 0; i < config.test_list->size; ++i) {
         config.run = __BDD_BEFORE_EACH_RUN__;
         config.test_tap_index = 0;
         __bdd_run__(&config, "before each");
@@ -223,7 +264,7 @@ int main(void) {
         config.run = __BDD_TEST_RUN__;
         config.test_index = i;
         config.test_tap_index = i + 1;
-        __bdd_run__(&config, config.test_list[i]);
+        __bdd_run__(&config, config.test_list->values[i]);
 
         config.run = __BDD_AFTER_EACH_RUN__;
         config.test_tap_index = 0;
@@ -236,7 +277,7 @@ int main(void) {
     if (config.failed_test_count > 0) {
         if (!config.use_tap) {
             printf(
-                "\n  %i test%s run, %i failed.\n",
+                "\n  %zu test%s run, %zu failed.\n",
                 test_count, test_count == 1 ? "" : "s", config.failed_test_count
             );
         }
@@ -253,15 +294,7 @@ void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
 
 #define it(name) \
 if (__bdd_config__->run == __BDD_INIT_RUN__) {\
-    while (__bdd_config__->test_index >= __bdd_config__->test_list_size) {\
-        __bdd_config__->test_list_size *= 2;\
-        __bdd_config__->test_list = realloc(\
-            __bdd_config__->test_list,\
-            sizeof(char*) * __bdd_config__->test_list_size\
-        );\
-    }\
-    __bdd_config__->test_list[__bdd_config__->test_index] = name;\
-    __bdd_config__->test_list[++__bdd_config__->test_index] = 0;\
+    __bdd_array_push__(__bdd_config__->test_list, name);\
 } else if (__bdd_config__->run == __BDD_TEST_RUN__ && __bdd_config__->test_index-- == 0)
 
 #define before_each() if (__bdd_config__->run == __BDD_BEFORE_EACH_RUN__)

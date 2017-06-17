@@ -29,10 +29,12 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifndef _WIN32
 #include <unistd.h>
 #include <term.h>
+
 #define __BDD_IS_ATTY__() isatty(fileno(stdin))
 #else
 #define WIN32_LEAN_AND_MEAN
@@ -55,21 +57,8 @@ SOFTWARE.
 #endif
 
 #define __BDD_COLOR_RESET__       "\x1B[0m"
-#define __BDD_COLOR_BLACK__       "\x1B[30m"             /* Black */
 #define __BDD_COLOR_RED__         "\x1B[31m"             /* Red */
 #define __BDD_COLOR_GREEN__       "\x1B[32m"             /* Green */
-#define __BDD_COLOR_YELLOW__      "\x1B[33m"             /* Yellow */
-#define __BDD_COLOR_BLUE__        "\x1B[34m"             /* Blue */
-#define __BDD_COLOR_MAGENTA__     "\x1B[35m"             /* Magenta */
-#define __BDD_COLOR_CYAN__        "\x1B[36m"             /* Cyan */
-#define __BDD_COLOR_WHITE__       "\x1B[37m"             /* White */
-#define __BDD_COLOR_BOLDBLACK__   "\x1B[1m\033[30m"      /* Bold Black */
-#define __BDD_COLOR_BOLDRED__     "\x1B[1m\033[31m"      /* Bold Red */
-#define __BDD_COLOR_BOLDGREEN__   "\x1B[1m\033[32m"      /* Bold Green */
-#define __BDD_COLOR_BOLDYELLOW__  "\x1B[1m\033[33m"      /* Bold Yellow */
-#define __BDD_COLOR_BOLDBLUE__    "\x1B[1m\033[34m"      /* Bold Blue */
-#define __BDD_COLOR_BOLDMAGENTA__ "\x1B[1m\033[35m"      /* Bold Magenta */
-#define __BDD_COLOR_BOLDCYAN__    "\x1B[1m\033[36m"      /* Bold Cyan */
 #define __BDD_COLOR_BOLD__        "\x1B[1m"              /* Bold White */
 
 enum __bdd_run_type__ {
@@ -150,8 +139,8 @@ char* __bdd_format__(const char* format, ...) {
     return result;
 }
 
-unsigned int __bdd_is_supported_term__() {
-    unsigned int result;
+bool __bdd_is_supported_term__() {
+    bool result;
     const char *term = getenv("TERM");
     result = term && strcmp(term, "") != 0;
 #ifndef _WIN32

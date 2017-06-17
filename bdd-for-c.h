@@ -291,16 +291,32 @@ int main(void) {
 const char* __bdd_spec_name__ = (name);\
 void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
 
+#define it(name)\
+for(\
+    size_t __bdd_index__ = 0,\
+        __bdd_ignore_pre_run__ = __bdd_config__->run == __BDD_INIT_RUN__ &&\
+            __bdd_array_push__(__bdd_config__->test_list, name)\
+    ;\
+    (\
+        __bdd_config__->run == __BDD_TEST_RUN__ && __bdd_index__ < 1 &&\
+        __bdd_config__->test_index-- == 0\
+    );\
+    ++__bdd_index__\
+)
 
-#define it(name) \
-if (__bdd_config__->run == __BDD_INIT_RUN__) {\
-    __bdd_array_push__(__bdd_config__->test_list, name);\
-} else if (__bdd_config__->run == __BDD_TEST_RUN__ && __bdd_config__->test_index-- == 0)
+#define __BDD_STEP__(run_type)\
+for(\
+    size_t __bdd_index__ = 0;\
+    (\
+        __bdd_config__->run == (run_type) && __bdd_index__ < 1\
+    );\
+    ++__bdd_index__\
+)
 
-#define before_each() if (__bdd_config__->run == __BDD_BEFORE_EACH_RUN__)
-#define after_each() if (__bdd_config__->run == __BDD_AFTER_EACH_RUN__)
-#define before() if (__bdd_config__->run == __BDD_BEFORE_RUN__)
-#define after() if (__bdd_config__->run == __BDD_AFTER_RUN__)
+#define before_each() __BDD_STEP__(__BDD_BEFORE_EACH_RUN__)
+#define after_each() __BDD_STEP__(__BDD_AFTER_EACH_RUN__)
+#define before() __BDD_STEP__(__BDD_BEFORE_RUN__)
+#define after() __BDD_STEP__(__BDD_AFTER_RUN__)
 
 
 #define __BDD_MACRO__(M, ...) __BDD_OVERLOAD__(M, __BDD_COUNT_ARGS__(__VA_ARGS__)) (__VA_ARGS__)

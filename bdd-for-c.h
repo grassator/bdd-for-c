@@ -524,17 +524,18 @@ for(\
 #define describe(name)\
 for(\
     void * __bdd_index__ = 0,\
-         * __bdd_node_name__ = (name),\
-         * __bdd_ignore_node__ = __bdd_node_create__(\
-            __bdd_node_name__,\
+         * __bdd_current_node__ = __bdd_node_create__(\
+            (name),\
             __bdd_node_names_concat__(__bdd_config__->node_stack, "-#-describe-#-"),\
             __BDD_NODE_GROUP__\
-         ),\
-         * __bdd_ignore_child__ = __bdd_array_push__(__BDD_LAST_NODE__->list_children, __bdd_ignore_node__),\
-         * __bdd_ignore_stack__ = __bdd_array_push__(__bdd_config__->node_stack, __bdd_ignore_node__)\
+         )\
     ;\
     (\
-        (int) __bdd_index__ < 1 \
+        (int) __bdd_index__ < 1 && (\
+            __bdd_array_push__(__BDD_LAST_NODE__->list_children, __bdd_current_node__),\
+            __bdd_array_push__(__bdd_config__->node_stack, __bdd_current_node__),\
+            true\
+        )\
     );\
     ++__bdd_index__, __bdd_array_pop__(__bdd_config__->node_stack) \
 )

@@ -267,6 +267,7 @@ typedef struct __bdd_config_type__ {
     __bdd_test_step__ * current_test;
     __bdd_array__* node_stack;
     char* error;
+    char* location;
     bool use_color;
     bool use_tap;
 } __bdd_config_type__;
@@ -334,6 +335,10 @@ void __bdd_run__(__bdd_config_type__* config) {
                 printf("  ");
             }
             printf("%s\n", config->error);
+            for (size_t i = 0; i < step->level + 2; ++i) {
+                printf("  ");
+            }
+            printf("%s\n", config->location);
         }
         free(config->error);
         config->error = NULL;
@@ -562,12 +567,17 @@ void __bdd_sprintf__(char* buffer, const char* fmt, const char* message) {
 #endif
 }
 
+#define __BDD_STRING_HELPER__(x) #x
+#define __BDD_STRING__(x) __BDD_STRING_HELPER__(x)
+#define __STRING__LINE__ __BDD_STRING__(__LINE__)
+
 #define __BDD_CHECK__(condition, ...) if (!(condition))\
 {\
     const char* message = __bdd_format__(__VA_ARGS__);\
     const char* fmt = __bdd_config__->use_color ?\
         (__BDD_COLOR_RED__ "Check failed:" __BDD_COLOR_RESET__ " %s" ) :\
         "Check failed: %s";\
+    __bdd_config__->location = "at " __FILE__ ":" __STRING__LINE__;\
     __bdd_config__->error = calloc(strlen(fmt) + strlen(message) + 1, sizeof(char));\
     __bdd_sprintf__(__bdd_config__->error, fmt, message);\
     return;\

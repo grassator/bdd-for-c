@@ -481,7 +481,7 @@ for(\
         ) || \
         (\
             __bdd_config__->run == __BDD_TEST_RUN__ &&\
-            (int) __bdd_index__ < 1 &&\
+            (intptr_t) __bdd_index__ < 1 &&\
             __bdd_same_string__(\
                 __bdd_format__("%s%s", __bdd_node_names_concat__(__bdd_config__->node_stack, (delimiter)), __bdd_node_name__),\
                 __bdd_config__->current_test->full_name\
@@ -536,7 +536,7 @@ for(\
          )\
     ;\
     (\
-        (int) __bdd_index__ < 1 && (\
+        (intptr_t) __bdd_index__ < 1 && (\
             __bdd_array_push__(__BDD_LAST_NODE__->list_children, __bdd_current_node__),\
             __bdd_array_push__(__bdd_config__->node_stack, __bdd_current_node__),\
             true\

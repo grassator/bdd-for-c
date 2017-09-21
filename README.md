@@ -130,6 +130,8 @@ To disable this mode, simply add a define statement before you include the `bdd-
 #include "bdd-for-c.h"
 ```
 
+> Note to [CLion](https://www.jetbrains.com/clion/) users. In order to get colored output when running tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables` field of your build configuration. 
+
 ## Support for [TAP](https://testanything.org)
 
 `bdd-for-c` supports the [test anything protocol](https://testanything.org) which has an output that is easily readable by programs. This allows an easier integration with CI systems as well as the aggregation of the output of multiple executables that are using `bdd-for-c`.

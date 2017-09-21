@@ -35,12 +35,12 @@ SOFTWARE.
 #include <unistd.h>
 #include <term.h>
 
-#define __BDD_IS_ATTY__() isatty(fileno(stdin))
+#define __BDD_IS_ATTY__() isatty(fileno(stdout))
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <io.h>
-#define __BDD_IS_ATTY__() _isatty(_fileno(stdin))
+#define __BDD_IS_ATTY__() _isatty(_fileno(stdout))
 #endif
 
 #ifdef _MSC_VER

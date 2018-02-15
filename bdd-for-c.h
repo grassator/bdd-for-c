@@ -273,9 +273,9 @@ typedef struct __bdd_config_type__ {
 } __bdd_config_type__;
 
 char *__bdd_spec_name__;
-void __bdd_test_main__(__bdd_config_type__* __bdd_config__);
+void __bdd_test_main__(__bdd_config_type__ *__bdd_config__);
 
-void __bdd_run__(__bdd_config_type__* config) {
+void __bdd_run__(__bdd_config_type__ *config) {
     __bdd_test_step__ *step = config->current_test;
     __bdd_test_main__(config);
 
@@ -462,7 +462,7 @@ int main(void) {
 
 #define spec(name) \
 char *__bdd_spec_name__ = (name);\
-void __bdd_test_main__ (__bdd_config_type__* __bdd_config__)\
+void __bdd_test_main__ (__bdd_config_type__ *__bdd_config__)\
 
 #define __BDD_LAST_NODE__ ((__bdd_node__ *) __bdd_array_last__(__bdd_config__->node_stack))
 

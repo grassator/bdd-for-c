@@ -142,9 +142,14 @@ __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
     __bdd_test_step__ *step = malloc(sizeof(__bdd_test_step__));
     step->level = level;
     step->type = node->type;
-    step->full_name = calloc(strlen(node->prefix) + strlen(node->name) + 1, sizeof(char));
-    strcat(step->full_name, node->prefix);
-    strcat(step->full_name, node->name);
+
+    size_t fullname_len = strlen(node->prefix) + strlen(node->name);
+    size_t fullname_cap = (fullname_len + 1) * sizeof(char);
+
+    step->full_name = calloc(fullname_len + 1, sizeof(char));
+    strlcat(step->full_name, node->prefix, fullname_cap);
+    strlcat(step->full_name, node->name, fullname_cap);
+
     step->name = node->name;
     return step;
 }
@@ -243,14 +248,20 @@ void __bdd_node_free__(__bdd_node__ *n) {
 
 char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
     size_t result_size = 0;
+
     for (size_t i = 0; i < list->size; ++i) {
         result_size += strlen(((__bdd_node__ *) list->values[i])->name) + strlen(delimiter);
     }
+
+    size_t result_cap = (result_size + 1) * sizeof(char);
+
     char *result = calloc(result_size + 1, sizeof(char));
+
     for (size_t i = 0; i < list->size; ++i) {
-        result = strcat(result, ((__bdd_node__ *) list->values[i])->name);
-        result = strcat(result, delimiter);
+        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_cap);
+        strlcat(result, delimiter, result_cap);
     }
+
     return result;
 }
 
@@ -561,7 +572,7 @@ void __bdd_sprintf__(char *buffer, const char *fmt, const char *message) {
 #pragma warning(push)
 #pragma warning(disable: 4996) // _CRT_SECURE_NO_WARNINGS
 #endif
-    sprintf(buffer, fmt, message);
+    snprintf(buffer, sizeof(buffer), fmt, message);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

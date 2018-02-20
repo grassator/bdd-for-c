@@ -243,14 +243,20 @@ void __bdd_node_free__(__bdd_node__ *n) {
 
 char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
     size_t result_size = 0;
+
     for (size_t i = 0; i < list->size; ++i) {
         result_size += strlen(((__bdd_node__ *) list->values[i])->name) + strlen(delimiter);
     }
+
+    size_t result_cap = (result_size + 1) * sizeof(char);
+
     char *result = calloc(result_size + 1, sizeof(char));
+
     for (size_t i = 0; i < list->size; ++i) {
-        result = strcat(result, ((__bdd_node__ *) list->values[i])->name);
-        result = strcat(result, delimiter);
+        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_cap);
+        strlcat(result, delimiter, result_cap);
     }
+
     return result;
 }
 

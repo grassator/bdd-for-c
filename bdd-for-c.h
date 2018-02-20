@@ -142,9 +142,14 @@ __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
     __bdd_test_step__ *step = malloc(sizeof(__bdd_test_step__));
     step->level = level;
     step->type = node->type;
-    step->full_name = calloc(strlen(node->prefix) + strlen(node->name) + 1, sizeof(char));
-    strcat(step->full_name, node->prefix);
-    strcat(step->full_name, node->name);
+
+    size_t fullname_len = strlen(node->prefix) + strlen(node->name);
+    size_t fullname_cap = (fullname_len + 1) * sizeof(char);
+
+    step->full_name = calloc(fullname_len + 1, sizeof(char));
+    strlcat(step->full_name, node->prefix, fullname_cap);
+    strlcat(step->full_name, node->name, fullname_cap);
+
     step->name = node->name;
     return step;
 }

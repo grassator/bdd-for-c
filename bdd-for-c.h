@@ -561,7 +561,7 @@ void __bdd_sprintf__(char *buffer, const char *fmt, const char *message) {
 #pragma warning(push)
 #pragma warning(disable: 4996) // _CRT_SECURE_NO_WARNINGS
 #endif
-    sprintf(buffer, fmt, message);
+    snprintf(buffer, sizeof(buffer), fmt, message);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

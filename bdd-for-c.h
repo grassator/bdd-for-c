@@ -143,12 +143,11 @@ __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
     step->level = level;
     step->type = node->type;
 
-    size_t fullname_len = strlen(node->prefix) + strlen(node->name);
-    size_t fullname_cap = (fullname_len + 1) * sizeof(char);
+    size_t fullname_len = strlen(node->prefix) + strlen(node->name) + 1;
 
-    step->full_name = calloc(fullname_len + 1, sizeof(char));
-    strlcat(step->full_name, node->prefix, fullname_cap);
-    strlcat(step->full_name, node->name, fullname_cap);
+    step->full_name = calloc(fullname_len, sizeof(char));
+    strlcat(step->full_name, node->prefix, fullname_len);
+    strlcat(step->full_name, node->name, fullname_len);
 
     step->name = node->name;
     return step;
@@ -247,19 +246,17 @@ void __bdd_node_free__(__bdd_node__ *n) {
 }
 
 char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
-    size_t result_size = 0;
+    size_t result_size = 1;
 
     for (size_t i = 0; i < list->size; ++i) {
         result_size += strlen(((__bdd_node__ *) list->values[i])->name) + strlen(delimiter);
     }
 
-    size_t result_cap = (result_size + 1) * sizeof(char);
-
-    char *result = calloc(result_size + 1, sizeof(char));
+    char *result = calloc(result_size, sizeof(char));
 
     for (size_t i = 0; i < list->size; ++i) {
-        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_cap);
-        strlcat(result, delimiter, result_cap);
+        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_size);
+        strlcat(result, delimiter, result_size);
     }
 
     return result;

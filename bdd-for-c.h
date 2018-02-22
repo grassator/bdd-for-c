@@ -143,12 +143,11 @@ __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
     step->level = level;
     step->type = node->type;
 
-    size_t fullname_len = strlen(node->prefix) + strlen(node->name);
-    size_t fullname_cap = (fullname_len + 1) * sizeof(char);
+    size_t fullname_len = strlen(node->prefix) + strlen(node->name) + 1;
 
-    step->full_name = calloc(fullname_len + 1, sizeof(char));
-    strlcat(step->full_name, node->prefix, fullname_cap);
-    strlcat(step->full_name, node->name, fullname_cap);
+    step->full_name = calloc(fullname_len, sizeof(char));
+    strlcat(step->full_name, node->prefix, fullname_len);
+    strlcat(step->full_name, node->name, fullname_len);
 
     step->name = node->name;
     return step;
@@ -247,19 +246,17 @@ void __bdd_node_free__(__bdd_node__ *n) {
 }
 
 char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
-    size_t result_size = 0;
+    size_t result_size = 1;
 
     for (size_t i = 0; i < list->size; ++i) {
         result_size += strlen(((__bdd_node__ *) list->values[i])->name) + strlen(delimiter);
     }
 
-    size_t result_cap = (result_size + 1) * sizeof(char);
-
-    char *result = calloc(result_size + 1, sizeof(char));
+    char *result = calloc(result_size, sizeof(char));
 
     for (size_t i = 0; i < list->size; ++i) {
-        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_cap);
-        strlcat(result, delimiter, result_cap);
+        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_size);
+        strlcat(result, delimiter, result_size);
     }
 
     return result;
@@ -567,12 +564,12 @@ for(\
 #define __BDD_COUNT_ARGS__(...) __BDD_PATTERN_MATCH__(__VA_ARGS__,_,_,_,_,_,_,_,_,_,ONE__)
 #define __BDD_PATTERN_MATCH__(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N, ...) N
 
-void __bdd_sprintf__(char *buffer, const char *fmt, const char *message) {
+void __bdd_snprintf__(char *buffer, size_t bufflen, const char *fmt, const char *message) {
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable: 4996) // _CRT_SECURE_NO_WARNINGS
 #endif
-    snprintf(buffer, sizeof(buffer), fmt, message);
+    snprintf(buffer, bufflen, fmt, message);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -589,8 +586,9 @@ void __bdd_sprintf__(char *buffer, const char *fmt, const char *message) {
         (__BDD_COLOR_RED__ "Check failed:" __BDD_COLOR_RESET__ " %s" ) :\
         "Check failed: %s";\
     __bdd_config__->location = "at " __FILE__ ":" __STRING__LINE__;\
-    __bdd_config__->error = calloc(strlen(fmt) + strlen(message) + 1, sizeof(char));\
-    __bdd_sprintf__(__bdd_config__->error, fmt, message);\
+    size_t bufflen = strlen(fmt) + strlen(message) + 1;\
+    __bdd_config__->error = calloc(bufflen, sizeof(char));\
+    __bdd_snprintf__(__bdd_config__->error, bufflen, fmt, message);\
     return;\
 }
 

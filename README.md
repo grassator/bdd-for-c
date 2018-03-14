@@ -265,10 +265,10 @@ indirect children:
 ```c
 #include "bdd-for-c.h"
 
-spec("ISO 80000-2 natural numbers") {
+spec("natural number") {
     it("should be non-negative") {
         for (int i = 0; i < 10; ++i) {
-            check(i >= 0);
+            check(i > 0);
         }
     }
 }

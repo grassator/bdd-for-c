@@ -274,47 +274,66 @@ spec("natural number") {
 }
 ```
 
-By default, a `check` statement uses the provided expression for error reporting, so, if you run the code above, you will see the following line:
+By default, a `check` statement uses the provided expression for error
+reporting, so, if you run the code above, you will see the following line:
 
 ```
 Check failed: i > 0
 ```
 
-Depending on your variable naming, as in this case, this can be quite useless for figuring out the cause of the failure. To remedy this problem, you can provide a formatter and additional parameters in the same manner as with `printf`:
+Depending on your variable naming, as in this example, test output can be
+unhelpful for figuring out the cause of the failure.  To remedy this problem,
+you can provide a formatter and additional parameters in the same manner as
+with `printf`:
 
 ```
-check(i > 0, "a natural number %i must greater than 0", i);
+check(i > 0, "a natural number %i must be greater than 0", i);
 ```
 
 This will give you a much more readable output:
 
 ```
-Check failed: a natural number 0 must greater than 0
+Check failed: a natural number 0 must be greater than 0
 ```
 
-> Due to limitations in the current implementation, the number of parameters to `check` is limited to 10.
+> Due to limitations in the current implementation, the number of parameters to
+> `check` is limited to 10.
 
-While `check` statements are mostly useful inside of `it` statements, you can also use them in the setup / teardown statements (`before`, `after`, `before_each`, `after_each`) to validate some pre- or post-conditions.
+While `check` statements are mostly useful inside of `it` statements, you can
+also use them in the setup and teardown statements (`before`, `after`,
+`before_each`, `after_each`) to validate some pre- or post-conditions.
 
 
 ### before
 
-`before()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run once before all of the `it` statements in the group/spec and can be useful to setup some state. There can be as many `before()` statements as necessary.
+A `before()` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs once before all of the `it`
+statements in the group/spec and can be useful to set up some state.  You can
+use as many `before()` statements as necessary.
 
 
 ### after
 
-`after()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run once after all of the `it` statements in the group/spec and can be useful to teardown some state. There can be as many `after()` statements as necessary.
+An `after()` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs once after all of the `it`
+statements in the group/spec and can be useful to tear down some state.  You
+can use as many `after()` statements as necessary.
 
 
 ### before_each
 
-`before_each()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run before each `it` statement and can be useful to setup some state. There can be as many `before_each()` statements as necessary.
+A `before_each()` statement, if needed, can be included directly inside a
+`spec`, `describe`, or `context` statement.  It runs before each `it` statement
+and can be useful to set up some state.  You can use as many `before_each()`
+statements as necessary.
 
 
 ### after_each
 
-`after_each()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run after each `it` statement and can be useful to setup some state. There can be as many `after_each()` statements as necessary.
+An `after_each()` statement, if needed, can be included directly inside a
+`spec`, `describe`, or `context` statement.  It runs after each `it` statement
+and can be useful to set up some state.  You can use as many `after_each()`
+statements as necessary.
 
 
 ## License

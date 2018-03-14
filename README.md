@@ -1,6 +1,6 @@
 # bdd-for-c
 
-`bdd-for-c` is a [BDD][bdd] library for the [C language][c].
+The `bdd-for-c` library is a [BDD][bdd] test framework for the [C language][c].
 
 ## Quick Start
 
@@ -82,9 +82,18 @@ correctly structured project).  This also makes mocking much easier.
 
 ## Handling State and Fixtures
 
-If you need to setup some state once before all the tests, or before each of the tests, `bdd-for-c` supports special `before` and `before_each` statements, and their counterparts `after` and `after_each`. As a bonus, you can define as many `before`, `after`, `before_each` and `after_each` statements in any order as you want, as long as they are on the same level as the corresponding `it` statement.
+If you need to set up some state once before all the tests, or before each of
+the tests, `bdd-for-c` supports special `before` and `before_each` statements,
+and their counterparts `after` and `after_each`.  As a bonus, you can define as
+many `before`, `after`, `before_each` and `after_each` statements in any order
+as you want, as long as they are on the same level as the corresponding `it`
+statement.
 
->The only caveat with handling state is that if you want to create some test-local variables, you need to mark them as `static`, otherwise the changes done `before` and `before_each` will not be persisted to the test itself, as each of the tests and these setup / teardown functions are implemented as separate function calls.
+> The only caveat with handling state is that, if you want to create some
+> test-local variables, you need to mark them as `static`.  Otherwise, the
+> changes done `before` and `before_each` will not persist to the test itself,
+> as each of the tests and these setup / teardown functions are implemented as
+> separate function calls.
 
 Here's how it all fits together:
 
@@ -139,29 +148,38 @@ spec("some feature") {
 
 ## Output Colorization
 
-By default, if the terminal correctly reports its color printing ability and the application is run in the interactive mode (from terminal), then the output is going to be colorized.
+By default, if the terminal correctly reports its color printing ability and
+the application is run in the interactive mode (from terminal), then the output
+is going to be colorized.
 
-To disable this mode, simply add a define statement before you include the `bdd-for-c.h` file:
+To disable this mode, simply add a define statement before you include the
+`bdd-for-c.h` file:
 
 ```c
 #define BDD_USE_COLOR 0
 #include "bdd-for-c.h"
 ```
 
-> Note to [CLion][clion] users. In order to get colored output when running tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables` field of your build configuration.
+> Note to [CLion][clion] users. In order to get colored output when running
+> tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment
+> Variables` field of your build configuration.
 
 ## Support for [TAP][tap]
 
-`bdd-for-c` supports the [test anything protocol][tap] which has an output that is easily readable by programs. This allows an easier integration with CI systems as well as the aggregation of the output of multiple executables that are using `bdd-for-c`.
+The `bdd-for-c` library supports the [test anything protocol][tap], or TAP,
+which formats output to be easily readable by programs.  This allows easier
+integration with continuous integration systems as well as the aggregation of
+output from multiple executables that use `bdd-for-c`.
 
-To switch to TAP output mode you can either add a `define` statement before you include the framework:
+To switch to TAP output mode you can add a `define` statement before including
+the framework:
 
 ```c
 #define BDD_USE_TAP 1
 #include "bdd-for-c.h"
 ```
 
-...or just add an environment variable when you run a test:
+You may also add an environment variable when you run a test, instead:
 
 ```bash
 BDD_USE_TAP=1 ./strncmp_spec
@@ -169,9 +187,13 @@ BDD_USE_TAP=1 ./strncmp_spec
 
 ## Available Statements
 
-The `bdd-for-c` framework uses macros to introduce several new statements to the C language that are similar to the built-in statements, such as `if`.
+The `bdd-for-c` framework uses macros to introduce several new statements to
+the C language that are similar to the built-in statements, such as `if`.
 
-These macros are implemented to be syntactically identical to the built-in statements. Among other things, this means that for the statements that expect a body, the body can be either empty (by terminating it with a semicolon), contain one statement, or contain a code block (a list of statements):
+These macros are implemented to be syntactically identical to the built-in
+statements.  Among other things, this means that for the statements that expect
+a body, the body can be empty (by terminating it with a semicolon), contain one
+statement, or contain a code block (a list of statements):
 
 ```c
 #include "bdd-for-c.h"

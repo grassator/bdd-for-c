@@ -1,24 +1,26 @@
 # bdd-for-c
 
-`bdd-for-c` is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development) library for the [C language](https://en.wikipedia.org/wiki/C_%28programming_language%29).
+`bdd-for-c` is a [BDD][bdd] library for the [C language][c].
 
 ## Quick Start
 
-To start, simply download the framework header file which can be easily done with curl on Linux and OS X:
-  
+To start, simply download the framework header file which can be easily done
+with curl on Linux and OS X:
+
 ```bash
 curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
 ```
 
-Then create a spec file, say named `strcmp_spec.c`, with some tests and the inclusion of the framework header, like the following: 
+Next, create a spec file, named something appropriate like `strcmp_spec.c` if
+testing the `strcmp()` funtion.  Add some tests and include the framework
+header, like the following:
 
 ```c
 #include <string.h>
 #include "bdd-for-c.h"
 
 spec("strcmp") {
-
-    static const char* test_string = "foo";
+    static const char *test_string = "foo";
 
     it("should return 0 when strings are equal") {
         check(strcmp(test_string, test_string) == 0);
@@ -33,18 +35,18 @@ spec("strcmp") {
         check(strcmp("foo", "bar") != 0);
         check(strcmp("foo", "foobar") != 0);
     }
-
 }
 ```
 
-Assuming you have a C compiler like [Clang](http://clang.llvm.org) or [GCC](http://clang.llvm.org) set up and ready to go, just type in the following commands to compile and run the test:
+Assuming you have a C compiler like [Clang][clang] or [GCC][gcc] set up and
+ready to go, just type in the following commands to compile and run the test:
 
 ```bash
 cc strcmp_spec.c -o strcmp_spec
 ./strcmp_spec
 ```
 
-You should then see a test output similar to the following:
+You should then see test output similar to the following:
 
 ```
 strcmp
@@ -55,11 +57,22 @@ strcmp
 
 ## Project Motivation and Development Philosophy
 
-In order for the testing to be truly useful, it needs to be really easy to setup and use, but also scalable for large projects. The tests should be very readable, but, ideally, have the same look-and-feel as the host language. The test output of the framework should be easy to read for humans and machines. Finally, if it's C, then the framework should only rely on ANSI-C99 features.
- 
-Unfortunately all of the existing frameworks, inspected before starting this project, lack one or more of the features mentioned above, with the most common problem being BASIC-style `BEGIN` / `END` delimiters for a test, like in [CSpec framework](https://github.com/arnaudbrejeon/cspec/wiki). The issue with `BEGIN` / `END` delimiters is not just that it "doesn't look like C", but also that it makes a different typing flow and screws up IDE auto-completion support.
+In order for testing to be truly useful, it needs to be really easy to setup
+and use, but also scalable for large projects.  The tests should be very
+readable but, ideally, have the same look-and-feel as the host language.  The
+framework's test output should be easy to read for both humans and machines.
+Finally, if it's C, then the framework should only rely on ANSI-C99 features.
 
-The framework is currently exclusively targeting the model of "one spec"—"one executable", as this is the model providing the fastest compile times (given a correctly structured project). This also makes mocking much easier.
+Unfortunately, all of the existing frameworks inspected before starting this
+project lack one or more of those requirements, with the most common problem
+being BASIC-style `BEGIN` / `END` delimiters for a test, like in [CSpec
+framework][cspec].  The issue with `BEGIN` / `END` delimiters is not just that
+it "doesn't look like C", but also that it imposes a different typing flow and
+screws up auto-completion support for IDEs and programming text editors.
+
+The framework is currently exclusively targeting the model of "one spec, one
+executable", as this is the model providing the fastest compile times (given a
+correctly structured project).  This also makes mocking much easier.
 
 
 ## Handling State and Fixtures
@@ -122,7 +135,7 @@ spec("some feature") {
 ## Output Colorization
 
 By default, if the terminal correctly reports its color printing ability and the application is run in the interactive mode (from terminal), then the output is going to be colorized.
- 
+
 To disable this mode, simply add a define statement before you include the `bdd-for-c.h` file:
 
 ```c
@@ -130,11 +143,11 @@ To disable this mode, simply add a define statement before you include the `bdd-
 #include "bdd-for-c.h"
 ```
 
-> Note to [CLion](https://www.jetbrains.com/clion/) users. In order to get colored output when running tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables` field of your build configuration. 
+> Note to [CLion][clion] users. In order to get colored output when running tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables` field of your build configuration.
 
-## Support for [TAP](https://testanything.org)
+## Support for [TAP][tap]
 
-`bdd-for-c` supports the [test anything protocol](https://testanything.org) which has an output that is easily readable by programs. This allows an easier integration with CI systems as well as the aggregation of the output of multiple executables that are using `bdd-for-c`.
+`bdd-for-c` supports the [test anything protocol][tap] which has an output that is easily readable by programs. This allows an easier integration with CI systems as well as the aggregation of the output of multiple executables that are using `bdd-for-c`.
 
 To switch to TAP output mode you can either add a `define` statement before you include the framework:
 
@@ -154,7 +167,7 @@ BDD_USE_TAP=1 ./strcmp_spec
 The `bdd-for-c` framework uses macros to introduce several new statements to the C language that are similar to the built-in statements, such as `if`.
 
 These macros are implemented to be syntactically identical to the built-in statements. Among other things, this means that for the statements that expect a body, the body can be either empty (by terminating it with a semicolon), contain one statement, or contain a code block (a list of statements):
-  
+
 ```c
 #include "bdd-for-c.h"
 
@@ -228,7 +241,7 @@ This will give you a much more readable output:
 Check failed: a natural number 0 must greater than 0
 ```
 
-> Due to limitations in the current implementation, the number of parameters to `check` is limited to 10. 
+> Due to limitations in the current implementation, the number of parameters to `check` is limited to 10.
 
 While `check` statements are mostly useful inside of `it` statements, you can also use them in the setup / teardown statements (`before`, `after`, `before_each`, `after_each`) to validate some pre- or post-conditions.
 
@@ -279,4 +292,10 @@ SOFTWARE.
 
 
 
-
+[bdd]: https://en.wikipedia.org/wiki/Behavior-driven_development
+[c]: https://en.wikipedia.org/wiki/C_%28programming_language%29
+[clang]: http://clang.llvm.org
+[gcc]: http://clang.llvm.org
+[cspec]: https://github.com/arnaudbrejeon/cspec/wiki
+[clion]: https://www.jetbrains.com/clion/
+[tap]: https://testanything.org

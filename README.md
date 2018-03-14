@@ -207,44 +207,68 @@ spec('statements') {
 }
 ```
 
-Also, same as with the built-in statements, you have to maintain a certain structure that will be mentioned where appropriate in the subsections below.
+As with the built-in statements, you have to maintain a certain structure,
+described where appropriate in the subsections below.
 
 ### spec
 
-`spec` must be a top-level statement and there must be exactly one `spec` statement in the test executable.  Trying to add more than one, will result in a compilation error.
+The `spec` statement must be a top-level statement and there must be exactly
+one `spec` statement in the test executable.  Using more than one will result
+in a compilation error.
 
-`spec("some functionality")` is used to group a set of expectations and setup/teardown code together and gives this unit a name (in this case "some functionality"), that will be used for test reporting.
+Use `spec("some functionality")` to group a set of expectations and
+setup/teardown code together and give the unit a name (in this case "some
+functionality").  This will be used for test reporting.
 
 ### it
 
-`it` statements must be included directly inside of the `spec`, `describe` or `context` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
+You must include `it` statements directly inside a `spec`, `describe`, or
+`context` statement.  Each `it` statement expects a string argument, typically
+starting with "should", used as a human readable explanation for the test, and
+used in reporting: `it("should behave in some manner")`.
 
-The `it` statement is a basic structural block of the spec and is used to ensure a particular expectation that is validated using `check` statements described below.
+The `it` statement is a basic structural block of the spec and is used to
+ensure a particular expectation, validated using `check` statements (described
+below).
 
 ### describe
 
-`describe` statements must be included directly inside of the `spec`, `context`, or another `describe` statement.
-
-The `describe` is used to group certain `it` statements together, usually based on the fact that they belong to the same functionality or happen in the same state.
+A `describe` statement must be included directly inside `spec` or `context`
+statements, or within another `describe` statement.  It is used to group `it`
+statements together, usually based on the fact that they belong to the same
+unit of program functionality.
 
 ### context
 
-A `context` statement is completely equivalent to `describe` in its behavior and should be used when it better conveys the topic of a group of tests.
+A `context` statement is functionally identical to `describe`, and should be
+used when it better conveys the topic of a group of tests.  It is usually used
+to group `describe` statements based on the fact they depend on the same
+program state, providing a way to easily set up the same program state for
+several test conditions.
 
-> NOTE: since `context` is a quite common global variable in C applications, it is possible to not expose it by setting a flag:
- `#define BDD_NO_CONTEXT_KEYWORD 1` before do you `#include "bdd-for-c.h"`
+> NOTE: Because `context` is a quite common global variable in C applications,
+> it is possible to not expose the `context` implementation in `bdd-for-c` by
+> setting a flag before including the `bdd-for-c` library:
+
+```c
+#define BDD_NO_CONTEXT_KEYWORD 1
+#include "bdd-for-c.h"
+```
 
 ### check
 
-`check` statements are used to check "truthfulness" of a given expression. In case of failures, they terminate the current spec block and report an error. These statements must be placed inside of `it` statements, either as direct or indirect children:
+A `check` statement is used to check "truthfulness" of a given expression.  In
+case of failure, it terminates the current spec block and reports an error.
+These statements must be placed inside of `it` statements, either as direct or
+indirect children:
 
 ```c
 #include "bdd-for-c.h"
 
-spec("natural number") {
+spec("ISO 80000-2 natural numbers") {
     it("should be non-negative") {
         for (int i = 0; i < 10; ++i) {
-            check(i > 0);
+            check(i >= 0);
         }
     }
 }

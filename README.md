@@ -11,29 +11,33 @@ with curl on Linux and OS X:
 curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
 ```
 
-Next, create a spec file, named something appropriate like `strcmp_spec.c` if
-testing the `strcmp()` funtion.  Add some tests and include the framework
+Next, create a spec file, named something appropriate like `strncmp_spec.c` if
+testing the `strncmp()` funtion.  Add some tests and include the framework
 header, like the following:
 
 ```c
 #include <string.h>
 #include "bdd-for-c.h"
 
-spec("strcmp") {
+spec("strncmp") {
     static const char *test_string = "foo";
 
     it("should return 0 when strings are equal") {
-        check(strcmp(test_string, test_string) == 0);
-        check(strcmp(test_string, "foo") == 0);
+        check(strncmp(test_string, test_string, 12) == 0);
+        check(strncmp(test_string, "foo", 12) == 0);
     }
 
     it("should work for empty strings") {
-        check(strcmp("", "") == 0);
+        check(strncmp("", "", 12) == 0);
     }
 
     it("should return non-0 when strings are not equal") {
-        check(strcmp("foo", "bar") != 0);
-        check(strcmp("foo", "foobar") != 0);
+        check(strncmp("foo", "bar", 12) != 0);
+        check(strncmp("foo", "foobar", 12) != 0);
+    }
+
+    it("should return 0 when strings match up to specified length") {
+        check(strncmp("foobar", "foobaz", 3) == 0);
     }
 }
 ```
@@ -42,17 +46,18 @@ Assuming you have a C compiler like [Clang][clang] or [GCC][gcc] set up and
 ready to go, just type in the following commands to compile and run the test:
 
 ```bash
-cc strcmp_spec.c -o strcmp_spec
-./strcmp_spec
+cc strncmp_spec.c -o strncmp_spec
+./strncmp_spec
 ```
 
 You should then see test output similar to the following:
 
 ```
-strcmp
+strncmp
   should return 0 when strings are equal (OK)
   should work for empty strings (OK)
   should return non-0 when strings are not equal (OK)
+  should return 0 when strings match up to specified length (OK)
 ```
 
 ## Project Motivation and Development Philosophy
@@ -159,7 +164,7 @@ To switch to TAP output mode you can either add a `define` statement before you 
 ...or just add an environment variable when you run a test:
 
 ```bash
-BDD_USE_TAP=1 ./strcmp_spec
+BDD_USE_TAP=1 ./strncmp_spec
 ```
 
 ## Available Statements

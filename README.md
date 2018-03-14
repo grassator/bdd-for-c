@@ -12,7 +12,7 @@ curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
 ```
 
 Next, create a spec file, named something appropriate like `strncmp_spec.c` if
-testing the `strncmp()` funtion.  Add some tests and include the framework
+testing the `strncmp` funtion.  Add some tests and include the framework
 header, like the following:
 
 ```c
@@ -306,34 +306,34 @@ also use them in the setup and teardown statements (`before`, `after`,
 
 ### before
 
-A `before()` statement, if needed, can be included directly inside a `spec`,
+A `before` statement, if needed, can be included directly inside a `spec`,
 `describe`, or `context` statement.  It runs once before all of the `it`
 statements in the group/spec and can be useful to set up some state.  You can
-use as many `before()` statements as necessary.
+use as many `before` statements as necessary.
 
 
 ### after
 
-An `after()` statement, if needed, can be included directly inside a `spec`,
+An `after` statement, if needed, can be included directly inside a `spec`,
 `describe`, or `context` statement.  It runs once after all of the `it`
 statements in the group/spec and can be useful to tear down some state.  You
-can use as many `after()` statements as necessary.
+can use as many `after` statements as necessary.
 
 
 ### before_each
 
-A `before_each()` statement, if needed, can be included directly inside a
-`spec`, `describe`, or `context` statement.  It runs before each `it` statement
-and can be useful to set up some state.  You can use as many `before_each()`
-statements as necessary.
+A `before_each` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs before each `it` statement and can
+be useful to set up some state.  You can use as many `before_each` statements
+as necessary.
 
 
 ### after_each
 
-An `after_each()` statement, if needed, can be included directly inside a
-`spec`, `describe`, or `context` statement.  It runs after each `it` statement
-and can be useful to set up some state.  You can use as many `after_each()`
-statements as necessary.
+An `after_each` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs after each `it` statement and can
+be useful to set up some state.  You can use as many `after_each` statements as
+necessary.
 
 
 ## License

@@ -1,72 +1,99 @@
 # bdd-for-c
 
-`bdd-for-c` is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development) library for the [C language](https://en.wikipedia.org/wiki/C_%28programming_language%29).
+The `bdd-for-c` library is a [BDD][bdd] test framework for the [C language][c].
 
 ## Quick Start
 
-To start, simply download the framework header file which can be easily done with curl on Linux and OS X:
-  
+To start, simply download the framework header file which can be easily done
+with curl on Linux and OS X:
+
 ```bash
 curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
 ```
 
-Then create a spec file, say named `strcmp_spec.c`, with some tests and the inclusion of the framework header, like the following: 
+Next, create a spec file, named something appropriate like `strncmp_spec.c` if
+testing the `strncmp` funtion.  Add some tests and include the framework
+header, like the following:
 
 ```c
 #include <string.h>
 #include "bdd-for-c.h"
 
-spec("strcmp") {
-
-    static const char* test_string = "foo";
+spec("strncmp") {
+    static const char *test_string = "foo";
 
     it("should return 0 when strings are equal") {
-        check(strcmp(test_string, test_string) == 0);
-        check(strcmp(test_string, "foo") == 0);
+        check(strncmp(test_string, test_string, 12) == 0);
+        check(strncmp(test_string, "foo", 12) == 0);
     }
 
     it("should work for empty strings") {
-        check(strcmp("", "") == 0);
+        check(strncmp("", "", 12) == 0);
     }
 
     it("should return non-0 when strings are not equal") {
-        check(strcmp("foo", "bar") != 0);
-        check(strcmp("foo", "foobar") != 0);
+        check(strncmp("foo", "bar", 12) != 0);
+        check(strncmp("foo", "foobar", 12) != 0);
     }
 
+    it("should return 0 when strings match up to specified length") {
+        check(strncmp("foobar", "foobaz", 3) == 0);
+    }
 }
 ```
 
-Assuming you have a C compiler like [Clang](http://clang.llvm.org) or [GCC](http://clang.llvm.org) set up and ready to go, just type in the following commands to compile and run the test:
+Assuming you have a C compiler like [Clang][clang] or [GCC][gcc] set up and
+ready to go, just type in the following commands to compile and run the test:
 
 ```bash
-cc strcmp_spec.c -o strcmp_spec
-./strcmp_spec
+cc strncmp_spec.c -o strncmp_spec
+./strncmp_spec
 ```
 
-You should then see a test output similar to the following:
+You should then see test output similar to the following:
 
 ```
-strcmp
+strncmp
   should return 0 when strings are equal (OK)
   should work for empty strings (OK)
   should return non-0 when strings are not equal (OK)
+  should return 0 when strings match up to specified length (OK)
 ```
 
 ## Project Motivation and Development Philosophy
 
-In order for the testing to be truly useful, it needs to be really easy to setup and use, but also scalable for large projects. The tests should be very readable, but, ideally, have the same look-and-feel as the host language. The test output of the framework should be easy to read for humans and machines. Finally, if it's C, then the framework should only rely on ANSI-C99 features.
- 
-Unfortunately all of the existing frameworks, inspected before starting this project, lack one or more of the features mentioned above, with the most common problem being BASIC-style `BEGIN` / `END` delimiters for a test, like in [CSpec framework](https://github.com/arnaudbrejeon/cspec/wiki). The issue with `BEGIN` / `END` delimiters is not just that it "doesn't look like C", but also that it makes a different typing flow and screws up IDE auto-completion support.
+In order for testing to be truly useful, it needs to be really easy to setup
+and use, but also scalable for large projects.  The tests should be very
+readable but, ideally, have the same look-and-feel as the host language.  The
+framework's test output should be easy to read for both humans and machines.
+Finally, if it's C, then the framework should only rely on ANSI-C99 features.
 
-The framework is currently exclusively targeting the model of "one spec"—"one executable", as this is the model providing the fastest compile times (given a correctly structured project). This also makes mocking much easier.
+Unfortunately, all of the existing frameworks inspected before starting this
+project lack one or more of those requirements, with the most common problem
+being BASIC-style `BEGIN` / `END` delimiters for a test, like in [CSpec
+framework][cspec].  The issue with `BEGIN` / `END` delimiters is not just that
+it "doesn't look like C", but also that it imposes a different typing flow and
+screws up auto-completion support for IDEs and programming text editors.
+
+The framework is currently exclusively targeting the model of "one spec, one
+executable", as this is the model providing the fastest compile times (given a
+correctly structured project).  This also makes mocking much easier.
 
 
 ## Handling State and Fixtures
 
-If you need to setup some state once before all the tests, or before each of the tests, `bdd-for-c` supports special `before` and `before_each` statements, and their counterparts `after` and `after_each`. As a bonus, you can define as many `before`, `after`, `before_each` and `after_each` statements in any order as you want, as long as they are on the same level as the corresponding `it` statement.
+If you need to set up some state once before all the tests, or before each of
+the tests, `bdd-for-c` supports special `before` and `before_each` statements,
+and their counterparts `after` and `after_each`.  As a bonus, you can define as
+many `before`, `after`, `before_each` and `after_each` statements in any order
+as you want, as long as they are on the same level as the corresponding `it`
+statement.
 
->The only caveat with handling state is that if you want to create some test-local variables, you need to mark them as `static`, otherwise the changes done `before` and `before_each` will not be persisted to the test itself, as each of the tests and these setup / teardown functions are implemented as separate function calls.
+> The only caveat with handling state is that, if you want to create some
+> test-local variables, you need to mark them as `static`.  Otherwise, the
+> changes done `before` and `before_each` will not persist to the test itself,
+> as each of the tests and these setup / teardown functions are implemented as
+> separate function calls.
 
 Here's how it all fits together:
 
@@ -121,40 +148,53 @@ spec("some feature") {
 
 ## Output Colorization
 
-By default, if the terminal correctly reports its color printing ability and the application is run in the interactive mode (from terminal), then the output is going to be colorized.
- 
-To disable this mode, simply add a define statement before you include the `bdd-for-c.h` file:
+By default, if the terminal correctly reports its color printing ability and
+the application is run in the interactive mode (from terminal), then the output
+is going to be colorized.
+
+To disable this mode, simply add a define statement before you include the
+`bdd-for-c.h` file:
 
 ```c
 #define BDD_USE_COLOR 0
 #include "bdd-for-c.h"
 ```
 
-> Note to [CLion](https://www.jetbrains.com/clion/) users. In order to get colored output when running tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables` field of your build configuration. 
+> Note to [CLion][clion] users. In order to get colored output when running
+> tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment
+> Variables` field of your build configuration.
 
-## Support for [TAP](https://testanything.org)
+## Support for [TAP][tap]
 
-`bdd-for-c` supports the [test anything protocol](https://testanything.org) which has an output that is easily readable by programs. This allows an easier integration with CI systems as well as the aggregation of the output of multiple executables that are using `bdd-for-c`.
+The `bdd-for-c` library supports the [test anything protocol][tap], or TAP,
+which formats output to be easily readable by programs.  This allows easier
+integration with continuous integration systems as well as the aggregation of
+output from multiple executables that use `bdd-for-c`.
 
-To switch to TAP output mode you can either add a `define` statement before you include the framework:
+To switch to TAP output mode you can add a `define` statement before including
+the framework:
 
 ```c
 #define BDD_USE_TAP 1
 #include "bdd-for-c.h"
 ```
 
-...or just add an environment variable when you run a test:
+You may also add an environment variable when you run a test, instead:
 
 ```bash
-BDD_USE_TAP=1 ./strcmp_spec
+BDD_USE_TAP=1 ./strncmp_spec
 ```
 
 ## Available Statements
 
-The `bdd-for-c` framework uses macros to introduce several new statements to the C language that are similar to the built-in statements, such as `if`.
+The `bdd-for-c` framework uses macros to introduce several new statements to
+the C language that are similar to the built-in statements, such as `if`.
 
-These macros are implemented to be syntactically identical to the built-in statements. Among other things, this means that for the statements that expect a body, the body can be either empty (by terminating it with a semicolon), contain one statement, or contain a code block (a list of statements):
-  
+These macros are implemented to be syntactically identical to the built-in
+statements.  Among other things, this means that for the statements that expect
+a body, the body can be empty (by terminating it with a semicolon), contain one
+statement, or contain a code block (a list of statements):
+
 ```c
 #include "bdd-for-c.h"
 
@@ -167,36 +207,60 @@ spec('statements') {
 }
 ```
 
-Also, same as with the built-in statements, you have to maintain a certain structure that will be mentioned where appropriate in the subsections below.
+As with the built-in statements, you have to maintain a certain structure,
+described where appropriate in the subsections below.
 
 ### spec
 
-`spec` must be a top-level statement and there must be exactly one `spec` statement in the test executable.  Trying to add more than one, will result in a compilation error.
+The `spec` statement must be a top-level statement and there must be exactly
+one `spec` statement in the test executable.  Using more than one will result
+in a compilation error.
 
-`spec("some functionality")` is used to group a set of expectations and setup/teardown code together and gives this unit a name (in this case "some functionality"), that will be used for test reporting.
+Use `spec("some functionality")` to group a set of expectations and
+setup/teardown code together and give the unit a name (in this case "some
+functionality").  This will be used for test reporting.
 
 ### it
 
-`it` statements must be included directly inside of the `spec`, `describe` or `context` statement. Each `it` statements expects a string argument, typically starting with "should", that is used as a human readable explanation for the test and is used in reporting: `it("should behave in some manner")`.
+You must include `it` statements directly inside a `spec`, `describe`, or
+`context` statement.  Each `it` statement expects a string argument, typically
+starting with "should", used as a human readable explanation for the test, and
+used in reporting: `it("should behave in some manner")`.
 
-The `it` statement is a basic structural block of the spec and is used to ensure a particular expectation that is validated using `check` statements described below.
+The `it` statement is a basic structural block of the spec and is used to
+ensure a particular expectation, validated using `check` statements (described
+below).
 
 ### describe
 
-`describe` statements must be included directly inside of the `spec`, `context`, or another `describe` statement.
-
-The `describe` is used to group certain `it` statements together, usually based on the fact that they belong to the same functionality or happen in the same state.
+A `describe` statement must be included directly inside `spec` or `context`
+statements, or within another `describe` statement.  It is used to group `it`
+statements together, usually based on the fact that they belong to the same
+unit of program functionality.
 
 ### context
 
-A `context` statement is completely equivalent to `describe` in its behavior and should be used when it better conveys the topic of a group of tests.
+A `context` statement is functionally identical to `describe`, and should be
+used when it better conveys the topic of a group of tests.  It is usually used
+to group `describe` statements based on the fact they depend on the same
+program state, providing a way to easily set up the same program state for
+several test conditions.
 
-> NOTE: since `context` is a quite common global variable in C applications, it is possible to not expose it by setting a flag:
- `#define BDD_NO_CONTEXT_KEYWORD 1` before do you `#include "bdd-for-c.h"`
+> NOTE: Because `context` is a quite common global variable in C applications,
+> it is possible to not expose the `context` implementation in `bdd-for-c` by
+> setting a flag before including the `bdd-for-c` library:
+
+```c
+#define BDD_NO_CONTEXT_KEYWORD 1
+#include "bdd-for-c.h"
+```
 
 ### check
 
-`check` statements are used to check "truthfulness" of a given expression. In case of failures, they terminate the current spec block and report an error. These statements must be placed inside of `it` statements, either as direct or indirect children:
+A `check` statement is used to check "truthfulness" of a given expression.  In
+case of failure, it terminates the current spec block and reports an error.
+These statements must be placed inside of `it` statements, either as direct or
+indirect children:
 
 ```c
 #include "bdd-for-c.h"
@@ -210,47 +274,66 @@ spec("natural number") {
 }
 ```
 
-By default, a `check` statement uses the provided expression for error reporting, so, if you run the code above, you will see the following line:
+By default, a `check` statement uses the provided expression for error
+reporting, so, if you run the code above, you will see the following line:
 
 ```
 Check failed: i > 0
 ```
 
-Depending on your variable naming, as in this case, this can be quite useless for figuring out the cause of the failure. To remedy this problem, you can provide a formatter and additional parameters in the same manner as with `printf`:
+Depending on your variable naming, as in this example, test output can be
+unhelpful for figuring out the cause of the failure.  To remedy this problem,
+you can provide a formatter and additional parameters in the same manner as
+with `printf`:
 
 ```
-check(i > 0, "a natural number %i must greater than 0", i);
+check(i > 0, "a natural number %i must be greater than 0", i);
 ```
 
 This will give you a much more readable output:
 
 ```
-Check failed: a natural number 0 must greater than 0
+Check failed: a natural number 0 must be greater than 0
 ```
 
-> Due to limitations in the current implementation, the number of parameters to `check` is limited to 10. 
+> Due to limitations in the current implementation, the number of parameters to
+> `check` is limited to 10.
 
-While `check` statements are mostly useful inside of `it` statements, you can also use them in the setup / teardown statements (`before`, `after`, `before_each`, `after_each`) to validate some pre- or post-conditions.
+While `check` statements are mostly useful inside of `it` statements, you can
+also use them in the setup and teardown statements (`before`, `after`,
+`before_each`, `after_each`) to validate some pre- or post-conditions.
 
 
 ### before
 
-`before()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run once before all of the `it` statements in the group/spec and can be useful to setup some state. There can be as many `before()` statements as necessary.
+A `before` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs once before all of the `it`
+statements in the group/spec and can be useful to set up some state.  You can
+use as many `before` statements as necessary.
 
 
 ### after
 
-`after()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run once after all of the `it` statements in the group/spec and can be useful to teardown some state. There can be as many `after()` statements as necessary.
+An `after` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs once after all of the `it`
+statements in the group/spec and can be useful to tear down some state.  You
+can use as many `after` statements as necessary.
 
 
 ### before_each
 
-`before_each()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run before each `it` statement and can be useful to setup some state. There can be as many `before_each()` statements as necessary.
+A `before_each` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs before each `it` statement and can
+be useful to set up some state.  You can use as many `before_each` statements
+as necessary.
 
 
 ### after_each
 
-`after_each()` statements, if needed, can be included directly inside of the `spec`, `describe` or `context` statements. It's run after each `it` statement and can be useful to setup some state. There can be as many `after_each()` statements as necessary.
+An `after_each` statement, if needed, can be included directly inside a `spec`,
+`describe`, or `context` statement.  It runs after each `it` statement and can
+be useful to set up some state.  You can use as many `after_each` statements as
+necessary.
 
 
 ## License
@@ -279,4 +362,10 @@ SOFTWARE.
 
 
 
-
+[bdd]: https://en.wikipedia.org/wiki/Behavior-driven_development
+[c]: https://en.wikipedia.org/wiki/C_%28programming_language%29
+[clang]: http://clang.llvm.org
+[gcc]: http://clang.llvm.org
+[cspec]: https://github.com/arnaudbrejeon/cspec/wiki
+[clion]: https://www.jetbrains.com/clion/
+[tap]: https://testanything.org

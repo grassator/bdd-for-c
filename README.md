@@ -60,6 +60,19 @@ strncmp
   should return 0 when strings match up to specified length (OK)
 ```
 
+## Dependencies
+
+On *nix systems, bdd-for-c depends on the following libraries:
+
+* libncurses 5.x
+* libbsd
+
+On Ubuntu-like (Debian) distributions you can install them via
+
+```bash
+sudo apt-get install libncurses5-dev libbsd-dev
+```
+
 ## Project Motivation and Development Philosophy
 
 In order for testing to be truly useful, it needs to be really easy to setup

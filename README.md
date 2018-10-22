@@ -2,17 +2,18 @@
 
 The `bdd-for-c` library is a [BDD][bdd] test framework for the [C language][c].
 
+
 ## Quick Start
 
 To start, simply download the framework header file which can be easily done
-with curl on Linux and OS X:
+with curl on [MacOS][mac], [Linux][linux], and [BSD Unix][bsd]:
 
 ```bash
 curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
 ```
 
 Next, create a spec file, named something appropriate like `strncmp_spec.c` if
-testing the `strncmp` funtion.  Add some tests and include the framework
+testing the `strncmp` function.  Add some tests and include the framework
 header, like the following:
 
 ```c
@@ -60,6 +61,7 @@ strncmp
   should return 0 when strings match up to specified length (OK)
 ```
 
+
 ## Dependencies
 
 On *nix systems, bdd-for-c depends on the following libraries:
@@ -67,29 +69,30 @@ On *nix systems, bdd-for-c depends on the following libraries:
 * libncurses 5.x
 * libbsd
 
-On Ubuntu-like (Debian) distributions you can install them via
+On Ubuntu-like (Debian) distributions you can install them via:
 
 ```bash
 sudo apt-get install libncurses5-dev libbsd-dev
 ```
 
+
 ## Project Motivation and Development Philosophy
 
-In order for testing to be truly useful, it needs to be really easy to setup
-and use, but also scalable for large projects.  The tests should be very
-readable but, ideally, have the same look-and-feel as the host language.  The
-framework's test output should be easy to read for both humans and machines.
-Finally, if it's C, then the framework should only rely on ANSI-C99 features.
+In order for testing to be truly useful, it needs to be easy to set up and use,
+but also scalable for large projects.  The tests should be very readable but,
+ideally, have the same look-and-feel as the host language.  The framework's
+test output should be easy to read for both humans and machines.  Finally, if
+it's C, the framework should only rely on ANSI/ISO-C99 features.
 
 Unfortunately, all of the existing frameworks inspected before starting this
 project lack one or more of those requirements, with the most common problem
-being BASIC-style `BEGIN` / `END` delimiters for a test, like in [CSpec
+being BASIC-style `BEGIN` / `END` delimiters for a test, like in the [CSpec
 framework][cspec].  The issue with `BEGIN` / `END` delimiters is not just that
 it "doesn't look like C", but also that it imposes a different typing flow and
 screws up auto-completion support for IDEs and programming text editors.
 
-The framework is currently exclusively targeting the model of "one spec, one
-executable", as this is the model providing the fastest compile times (given a
+The bdd-for-c framework currently exclusively targets the model of "one spec,
+one executable", as this model provides the fastest compile times (given a
 correctly structured project).  This also makes mocking much easier.
 
 
@@ -124,7 +127,7 @@ spec("some feature") {
     }
 
     after() {
-        printf("%i tests run. %i failed.\n", test_count, tests_failed);
+        printf("%i tests run.  %i failed.\n", test_count, tests_failed);
     }
 
     before() {
@@ -159,6 +162,7 @@ spec("some feature") {
 }
 ```
 
+
 ## Output Colorization
 
 By default, if the terminal correctly reports its color printing ability and
@@ -173,9 +177,10 @@ To disable this mode, simply add a define statement before you include the
 #include "bdd-for-c.h"
 ```
 
-> Note to [CLion][clion] users. In order to get colored output when running
-> tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment
-> Variables` field of your build configuration.
+> Note to [CLion][clion] users: To get colored output when running tests from
+> the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables`
+> field of your build configuration.
+
 
 ## Support for [TAP][tap]
 
@@ -198,6 +203,7 @@ You may also add an environment variable when you run a test, instead:
 BDD_USE_TAP=1 ./strncmp_spec
 ```
 
+
 ## Available Statements
 
 The `bdd-for-c` framework uses macros to introduce several new statements to
@@ -214,7 +220,7 @@ statement, or contain a code block (a list of statements):
 spec('statements') {
     it("should not do anything");
     it("should be in short form") check(1 + 1 = 2);
-    it("should be have a code block") {
+    it("should have a code block") {
         check(1 + 1 = 2);
     }
 }
@@ -367,7 +373,7 @@ copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -376,9 +382,12 @@ SOFTWARE.
 
 
 [bdd]: https://en.wikipedia.org/wiki/Behavior-driven_development
+[bsd]: https://en.wikipedia.org/wiki/Berkeley_Software_Distribution
 [c]: https://en.wikipedia.org/wiki/C_%28programming_language%29
 [clang]: http://clang.llvm.org
 [gcc]: http://clang.llvm.org
 [cspec]: https://github.com/arnaudbrejeon/cspec/wiki
 [clion]: https://www.jetbrains.com/clion/
+[linux]: https://en.wikipedia.org/wiki/Linux
+[mac]: https://en.wikipedia.org/wiki/MacOS
 [tap]: https://testanything.org

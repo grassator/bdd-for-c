@@ -236,7 +236,7 @@ one `spec` statement in the test executable.  Using more than one will result
 in a compilation error.
 
 Use `spec("some functionality")` to group a set of expectations and
-setup/teardown code together and give the unit a name (in this case "some
+setup/teardown code together, and to give the unit a name (in this case "some
 functionality").  This will be used for test reporting.
 
 ### it
@@ -252,8 +252,8 @@ below).
 
 ### describe
 
-A `describe` statement must be included directly inside `spec` or `context`
-statements, or within another `describe` statement.  It is used to group `it`
+A `describe` statement must be included directly inside a `spec` or `context`
+statement, or within another `describe` statement.  It is used to group `it`
 statements together, usually based on the fact that they belong to the same
 unit of program functionality.
 
@@ -309,7 +309,7 @@ with `printf`:
 check(i > 0, "a natural number %i must be greater than 0", i);
 ```
 
-This will give you a much more readable output:
+This can provide much more informative output:
 
 ```
 Check failed: a natural number 0 must be greater than 0
@@ -319,8 +319,8 @@ Check failed: a natural number 0 must be greater than 0
 > `check` is limited to 10.
 
 While `check` statements are mostly useful inside of `it` statements, you can
-also use them in the setup and teardown statements (`before`, `after`,
-`before_each`, `after_each`) to validate some pre- or post-conditions.
+use them in setup and teardown statements (`before`, `after`, `before_each`,
+`after_each`) to validate some pre- or post-conditions as well.
 
 
 ### before
@@ -334,9 +334,9 @@ use as many `before` statements as necessary.
 ### after
 
 An `after` statement, if needed, can be included directly inside a `spec`,
-`describe`, or `context` statement.  It runs once after all of the `it`
-statements in the group/spec and can be useful to tear down some state.  You
-can use as many `after` statements as necessary.
+`describe`, or `context` statement.  It runs once after all `it` statements in
+the group and can be useful to tear down some state.  You can use as many
+`after` statements as necessary.
 
 
 ### before_each
@@ -351,8 +351,8 @@ as necessary.
 
 An `after_each` statement, if needed, can be included directly inside a `spec`,
 `describe`, or `context` statement.  It runs after each `it` statement and can
-be useful to set up some state.  You can use as many `after_each` statements as
-necessary.
+be useful to tear down some state.  You can use as many `after_each` statements
+as necessary.
 
 
 ## License

@@ -6,7 +6,7 @@ The `bdd-for-c` library is a [BDD][bdd] test framework for the [C language][c].
 ## Quick Start
 
 To start, simply download the framework header file which can be easily done
-with curl on [MacOS][mac], [Linux][linux], and [BSD Unix][bsd]:
+with curl on Linux, MacOS, and BSD Unix:
 
 ```bash
 curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
@@ -127,7 +127,7 @@ spec("some feature") {
     }
 
     after() {
-        printf("%i tests run.  %i failed.\n", test_count, tests_failed);
+        printf("%i tests run. %i failed.\n", test_count, tests_failed);
     }
 
     before() {
@@ -382,12 +382,9 @@ SOFTWARE.
 
 
 [bdd]: https://en.wikipedia.org/wiki/Behavior-driven_development
-[bsd]: https://en.wikipedia.org/wiki/Berkeley_Software_Distribution
 [c]: https://en.wikipedia.org/wiki/C_%28programming_language%29
 [clang]: http://clang.llvm.org
 [gcc]: http://clang.llvm.org
 [cspec]: https://github.com/arnaudbrejeon/cspec/wiki
 [clion]: https://www.jetbrains.com/clion/
-[linux]: https://en.wikipedia.org/wiki/Linux
-[mac]: https://en.wikipedia.org/wiki/MacOS
 [tap]: https://testanything.org

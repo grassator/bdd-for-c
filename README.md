@@ -2,17 +2,18 @@
 
 The `bdd-for-c` library is a [BDD][bdd] test framework for the [C language][c].
 
+
 ## Quick Start
 
 To start, simply download the framework header file which can be easily done
-with curl on Linux and OS X:
+with curl on Linux, MacOS, and BSD Unix:
 
 ```bash
 curl -O https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
 ```
 
 Next, create a spec file, named something appropriate like `strncmp_spec.c` if
-testing the `strncmp` funtion.  Add some tests and include the framework
+testing the `strncmp` function.  Add some tests and include the framework
 header, like the following:
 
 ```c
@@ -60,6 +61,7 @@ strncmp
   should return 0 when strings match up to specified length (OK)
 ```
 
+
 ## Dependencies
 
 On *nix systems, bdd-for-c depends on the following libraries:
@@ -67,29 +69,30 @@ On *nix systems, bdd-for-c depends on the following libraries:
 * libncurses 5.x
 * libbsd
 
-On Ubuntu-like (Debian) distributions you can install them via
+On Ubuntu-like (Debian) distributions you can install them via:
 
 ```bash
 sudo apt-get install libncurses5-dev libbsd-dev
 ```
 
+
 ## Project Motivation and Development Philosophy
 
-In order for testing to be truly useful, it needs to be really easy to setup
-and use, but also scalable for large projects.  The tests should be very
-readable but, ideally, have the same look-and-feel as the host language.  The
-framework's test output should be easy to read for both humans and machines.
-Finally, if it's C, then the framework should only rely on ANSI-C99 features.
+In order for testing to be truly useful, it needs to be easy to set up and use,
+but also scalable for large projects.  The tests should be very readable but,
+ideally, have the same look-and-feel as the host language.  The framework's
+test output should be easy to read for both humans and machines.  Finally, if
+it's C, the framework should only rely on ANSI/ISO-C99 features.
 
 Unfortunately, all of the existing frameworks inspected before starting this
 project lack one or more of those requirements, with the most common problem
-being BASIC-style `BEGIN` / `END` delimiters for a test, like in [CSpec
+being BASIC-style `BEGIN` / `END` delimiters for a test, like in the [CSpec
 framework][cspec].  The issue with `BEGIN` / `END` delimiters is not just that
 it "doesn't look like C", but also that it imposes a different typing flow and
 screws up auto-completion support for IDEs and programming text editors.
 
-The framework is currently exclusively targeting the model of "one spec, one
-executable", as this is the model providing the fastest compile times (given a
+The bdd-for-c framework currently exclusively targets the model of "one spec,
+one executable", as this model provides the fastest compile times (given a
 correctly structured project).  This also makes mocking much easier.
 
 
@@ -159,6 +162,7 @@ spec("some feature") {
 }
 ```
 
+
 ## Output Colorization
 
 By default, if the terminal correctly reports its color printing ability and
@@ -173,9 +177,10 @@ To disable this mode, simply add a define statement before you include the
 #include "bdd-for-c.h"
 ```
 
-> Note to [CLion][clion] users. In order to get colored output when running
-> tests from the IDE, you need to add `TERM=xterm-256color` to the `Environment
-> Variables` field of your build configuration.
+> Note to [CLion][clion] users: To get colored output when running tests from
+> the IDE, you need to add `TERM=xterm-256color` to the `Environment Variables`
+> field of your build configuration.
+
 
 ## Support for [TAP][tap]
 
@@ -198,6 +203,7 @@ You may also add an environment variable when you run a test, instead:
 BDD_USE_TAP=1 ./strncmp_spec
 ```
 
+
 ## Available Statements
 
 The `bdd-for-c` framework uses macros to introduce several new statements to
@@ -214,7 +220,7 @@ statement, or contain a code block (a list of statements):
 spec('statements') {
     it("should not do anything");
     it("should be in short form") check(1 + 1 = 2);
-    it("should be have a code block") {
+    it("should have a code block") {
         check(1 + 1 = 2);
     }
 }
@@ -230,7 +236,7 @@ one `spec` statement in the test executable.  Using more than one will result
 in a compilation error.
 
 Use `spec("some functionality")` to group a set of expectations and
-setup/teardown code together and give the unit a name (in this case "some
+setup/teardown code together, and to give the unit a name (in this case "some
 functionality").  This will be used for test reporting.
 
 ### it
@@ -246,8 +252,8 @@ below).
 
 ### describe
 
-A `describe` statement must be included directly inside `spec` or `context`
-statements, or within another `describe` statement.  It is used to group `it`
+A `describe` statement must be included directly inside a `spec` or `context`
+statement, or within another `describe` statement.  It is used to group `it`
 statements together, usually based on the fact that they belong to the same
 unit of program functionality.
 
@@ -303,7 +309,7 @@ with `printf`:
 check(i > 0, "a natural number %i must be greater than 0", i);
 ```
 
-This will give you a much more readable output:
+This can provide much more informative output:
 
 ```
 Check failed: a natural number 0 must be greater than 0
@@ -313,8 +319,8 @@ Check failed: a natural number 0 must be greater than 0
 > `check` is limited to 10.
 
 While `check` statements are mostly useful inside of `it` statements, you can
-also use them in the setup and teardown statements (`before`, `after`,
-`before_each`, `after_each`) to validate some pre- or post-conditions.
+use them in setup and teardown statements (`before`, `after`, `before_each`,
+`after_each`) to validate some pre- or post-conditions as well.
 
 
 ### before
@@ -328,9 +334,9 @@ use as many `before` statements as necessary.
 ### after
 
 An `after` statement, if needed, can be included directly inside a `spec`,
-`describe`, or `context` statement.  It runs once after all of the `it`
-statements in the group/spec and can be useful to tear down some state.  You
-can use as many `after` statements as necessary.
+`describe`, or `context` statement.  It runs once after all `it` statements in
+the group and can be useful to tear down some state.  You can use as many
+`after` statements as necessary.
 
 
 ### before_each
@@ -345,8 +351,8 @@ as necessary.
 
 An `after_each` statement, if needed, can be included directly inside a `spec`,
 `describe`, or `context` statement.  It runs after each `it` statement and can
-be useful to set up some state.  You can use as many `after_each` statements as
-necessary.
+be useful to tear down some state.  You can use as many `after_each` statements
+as necessary.
 
 
 ## License
@@ -367,7 +373,7 @@ copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE

@@ -61,6 +61,25 @@ SOFTWARE.
 #define __BDD_COLOR_GREEN__       "\x1B[32m"             /* Green */
 #define __BDD_COLOR_BOLD__        "\x1B[1m"              /* Bold White */
 
+size_t __bdd_strlcat__(char* dst, const char* src, size_t size)
+{
+    size_t len = 0;
+    size_t slen = strlen(src);
+    while (*dst && size > 0) {
+        dst++;
+        len++;
+        size--;
+    }
+    while (*src && size-- > 1) {
+        *dst++ = *src++;
+    }
+    if (size == 1 || *src == 0) {
+        *dst = 0;
+    }
+    return slen + len;
+}
+
+
 bool __bdd_same_string__(const char *str1, const char *str2) {
     size_t str1length = strlen(str1);
     size_t str2length = strlen(str2);
@@ -78,6 +97,10 @@ typedef struct __bdd_array__ {
 
 __bdd_array__ *__bdd_array_create__() {
     __bdd_array__ *arr = malloc(sizeof(__bdd_array__));
+    if (!arr) {
+        perror("malloc(array)");
+        abort();
+    }
     arr->capacity = 4;
     arr->size = 0;
     arr->values = calloc(arr->capacity, sizeof(void *));
@@ -87,7 +110,12 @@ __bdd_array__ *__bdd_array_create__() {
 void *__bdd_array_push__(__bdd_array__ *arr, void *item) {
     if (arr->size == arr->capacity) {
         arr->capacity *= 2;
-        arr->values = realloc(arr->values, sizeof(void *) * arr->capacity);
+        void *v = realloc(arr->values, sizeof(void*) * arr->capacity);
+        if (!v) {
+            perror("realloc(array)");
+            abort();
+        }
+        arr->values = v;
     }
     arr->values[arr->size++] = item;
     return item;
@@ -140,14 +168,22 @@ typedef struct __bdd_node__ {
 
 __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
     __bdd_test_step__ *step = malloc(sizeof(__bdd_test_step__));
+    if (!step) {
+        perror("malloc(step)");
+        abort();
+    }
     step->level = level;
     step->type = node->type;
 
     size_t fullname_len = strlen(node->prefix) + strlen(node->name) + 1;
 
     step->full_name = calloc(fullname_len, sizeof(char));
-    strlcat(step->full_name, node->prefix, fullname_len);
-    strlcat(step->full_name, node->name, fullname_len);
+    if (!step->full_name) {
+        perror("calloc(full_name)");
+        abort();
+    }
+    __bdd_strlcat__(step->full_name, node->prefix, fullname_len);
+    __bdd_strlcat__(step->full_name, node->name, fullname_len);
 
     step->name = node->name;
     return step;
@@ -155,6 +191,10 @@ __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
 
 __bdd_node__ *__bdd_node_create__(char *name, char *prefix, __bdd_node_type__ type) {
     __bdd_node__ *n = malloc(sizeof(__bdd_node__));
+    if (!n) {
+        perror("malloc(node)");
+        abort();
+    }
     n->name = name;
     n->prefix = prefix;
     n->type = type;
@@ -253,10 +293,14 @@ char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
     }
 
     char *result = calloc(result_size, sizeof(char));
+    if (!result) {
+        perror("calloc(result)");
+        abort();
+    }
 
     for (size_t i = 0; i < list->size; ++i) {
-        strlcat(result, ((__bdd_node__ *) list->values[i])->name, result_size);
-        strlcat(result, delimiter, result_size);
+        __bdd_strlcat__(result, ((__bdd_node__ *) list->values[i])->name, result_size);
+        __bdd_strlcat__(result, delimiter, result_size);
     }
 
     return result;
@@ -360,10 +404,19 @@ char *__bdd_format__(const char *format, ...) {
     // First we over-allocate
     const size_t size = 2048;
     char *result = calloc(size, sizeof(char));
+    if (!result) {
+        perror("calloc(result)");
+        abort();
+    }
     vsnprintf(result, size - 1, format, va);
 
     // Then clip to an actual size
-    result = realloc(result, strlen(result) + 1);
+    void* r = realloc(result, strlen(result) + 1);
+    if (!r) {
+        perror("realloc(result)");
+        abort();
+    }
+    result = r;
 
     va_end(va);
     return result;
@@ -496,7 +549,7 @@ for(\
             )\
         )\
     );\
-    ++__bdd_index__\
+    __bdd_index__ = (char*)__bdd_index__ + 1\
 )
 
 #define it(name) __BDD_STEP__(\

@@ -219,9 +219,9 @@ statement, or contain a code block (a list of statements):
 
 spec('statements') {
     it("should not do anything");
-    it("should be in short form") check(1 + 1 = 2);
+    it("should be in short form") check(1 + 1 == 2);
     it("should have a code block") {
-        check(1 + 1 = 2);
+        check(1 + 1 == 2);
     }
 }
 ```

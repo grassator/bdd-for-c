@@ -11,3 +11,6 @@ add_executable(test_tree_test ${TEST_TREE_SOURCES})
 
 set(ARRAY_SOURCES array.c bdd-for-c.h array.h)
 add_executable(array_test ${ARRAY_SOURCES})
+
+set(DYNAMIC_TEST_SOURCES dynamic-test.c bdd-for-c.h array.h)
+add_executable(dynamic_test ${DYNAMIC_TEST_SOURCES})

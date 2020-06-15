@@ -552,9 +552,9 @@ for(\
     __bdd_index__ = (char*)__bdd_index__ + 1\
 )
 
-#define it(name) __BDD_STEP__(\
+#define it(...) __BDD_STEP__(\
   __BDD_LAST_NODE__->list_children,\
-  name,\
+  __bdd_format__(__VA_ARGS__),\
   __BDD_NODE_TEST__,\
   "-#-it-#-"\
 )
@@ -587,11 +587,11 @@ for(\
   "-#-after-#-"\
 )
 
-#define describe(name)\
+#define describe(...)\
 for(\
     void *__bdd_index__ = 0,\
          *__bdd_current_node__ = __bdd_node_create__(\
-            (name),\
+            __bdd_format__(__VA_ARGS__),\
             __bdd_node_names_concat__(__bdd_config__->node_stack, "-#-describe-#-"),\
             __BDD_NODE_GROUP__\
          )\

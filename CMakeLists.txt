@@ -14,3 +14,6 @@ add_executable(array_test ${ARRAY_SOURCES})
 
 set(DYNAMIC_TEST_SOURCES dynamic-test.c bdd-for-c.h array.h)
 add_executable(dynamic_test ${DYNAMIC_TEST_SOURCES})
+
+set(BEFORE_AFTER_SOURCES before-after.c bdd-for-c.h)
+add_executable(before_after ${BEFORE_AFTER_SOURCES})

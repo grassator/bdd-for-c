@@ -229,7 +229,8 @@ void __bdd_node_flatten_internal__(
         __bdd_array_push__(steps, __bdd_test_step_create__(level, node));
 
         for (size_t listIndex = 0; listIndex < after_each_lists->size; ++listIndex) {
-            __bdd_array__ *list = after_each_lists->values[listIndex];
+            size_t reverseListIndex = after_each_lists->size - listIndex - 1;
+            __bdd_array__ *list = after_each_lists->values[reverseListIndex];
             for (size_t i = 0; i < list->size; ++i) {
                 __bdd_array_push__(steps, __bdd_test_step_create__(level, list->values[i]));
             }

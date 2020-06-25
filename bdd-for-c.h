@@ -346,7 +346,15 @@ bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptr
         return false;
     }
 
+    if (config->id >= config->nodes->size) {
+        fprintf(stderr, "non-deterministic spec\n");
+        abort();
+    }
     __bdd_node__ *node = config->nodes->values[config->id];
+    if (node->type != type || strcmp(node->name, name) != 0) {
+        fprintf(stderr, "non-deterministic spec\n");
+        abort();
+    }
     free(name);
 
     __bdd_test_step__ *step = config->current_test;

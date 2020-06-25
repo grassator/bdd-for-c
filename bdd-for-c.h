@@ -253,14 +253,18 @@ void __bdd_node_flatten_internal__(
     }
 }
 
-__bdd_array__ *__bdd_node_flatten__(__bdd_node__ *node, __bdd_array__ *names) {
+__bdd_array__ *__bdd_node_flatten__(__bdd_node__ *node, __bdd_array__ *steps) {
     if (node == NULL) {
-        return names;
+        return steps;
     }
 
-    __bdd_node_flatten_internal__(0, node, names, __bdd_array_create__(), __bdd_array_create__());
+    __bdd_array__ *before_each_lists = __bdd_array_create__();
+    __bdd_array__ *after_each_lists = __bdd_array_create__();
+    __bdd_node_flatten_internal__(0, node, steps, before_each_lists, after_each_lists);
+    __bdd_array_free__(before_each_lists);
+    __bdd_array_free__(after_each_lists);
 
-    return names;
+    return steps;
 }
 
 void __bdd_node_free__(__bdd_node__ *n);

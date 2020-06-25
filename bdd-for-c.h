@@ -61,6 +61,7 @@ SOFTWARE.
 #define __BDD_COLOR_RED__         "\x1B[31m"             /* Red */
 #define __BDD_COLOR_GREEN__       "\x1B[32m"             /* Green */
 #define __BDD_COLOR_BOLD__        "\x1B[1m"              /* Bold White */
+#define __BDD_COLOR_MAGENTA__     "\x1B[35m"             /* Magenta */
 
 size_t __bdd_strlcat__(char* dst, const char* src, size_t size)
 {
@@ -356,6 +357,19 @@ bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptr
     } else {
         config->id = node->next_node_id;
     }
+#if defined(BDD_PRINT_TRACE)
+    fprintf(
+        stderr,
+        "%s%d %s [%d, %d) %s%s\n",
+        config->use_color ? __BDD_COLOR_MAGENTA__ : "",
+        config->current_test->id,
+        should_enter ? ">" : "|",
+        node->id,
+        node->next_node_id,
+        node->name,
+        config->use_color ? __BDD_COLOR_RESET__ : ""
+    );
+#endif
     return should_enter;
 }
 

@@ -63,34 +63,6 @@ SOFTWARE.
 #define __BDD_COLOR_BOLD__        "\x1B[1m"              /* Bold White */
 #define __BDD_COLOR_MAGENTA__     "\x1B[35m"             /* Magenta */
 
-size_t __bdd_strlcat__(char* dst, const char* src, size_t size)
-{
-    size_t len = 0;
-    size_t slen = strlen(src);
-    while (*dst && size > 0) {
-        dst++;
-        len++;
-        size--;
-    }
-    while (*src && size-- > 1) {
-        *dst++ = *src++;
-    }
-    if (size == 1 || *src == 0) {
-        *dst = 0;
-    }
-    return slen + len;
-}
-
-
-bool __bdd_same_string__(const char *str1, const char *str2) {
-    size_t str1length = strlen(str1);
-    size_t str2length = strlen(str2);
-    if (str1length != str2length) {
-        return 0;
-    }
-    return strncmp(str1, str2, str1length) == 0;
-}
-
 typedef struct __bdd_array__ {
     void **values;
     size_t capacity;
@@ -275,27 +247,6 @@ void __bdd_node_free__(__bdd_node__ *n) {
     __bdd_array_free__(n->list_after_each);
     __bdd_array_free__(n->list_children);
     free(n);
-}
-
-char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
-    size_t result_size = 1;
-
-    for (size_t i = 0; i < list->size; ++i) {
-        result_size += strlen(((__bdd_node__ *) list->values[i])->name) + strlen(delimiter);
-    }
-
-    char *result = calloc(result_size, sizeof(char));
-    if (!result) {
-        perror("calloc(result)");
-        abort();
-    }
-
-    for (size_t i = 0; i < list->size; ++i) {
-        __bdd_strlcat__(result, ((__bdd_node__ *) list->values[i])->name, result_size);
-        __bdd_strlcat__(result, delimiter, result_size);
-    }
-
-    return result;
 }
 
 enum __bdd_run_type__ {

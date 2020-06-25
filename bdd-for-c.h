@@ -390,7 +390,6 @@ void __bdd_exit_node__(__bdd_config_type__ *config) {
 
 void __bdd_run__(__bdd_config_type__ *config) {
     __bdd_test_step__ *step = config->current_test;
-    __bdd_test_main__(config);
 
     if (step->type == __BDD_NODE_GROUP__ && !config->use_tap) {
         for (size_t i = 0; i < step->level; ++i) {
@@ -402,7 +401,10 @@ void __bdd_run__(__bdd_config_type__ *config) {
             step->name,
             config->use_color ? __BDD_COLOR_RESET__ : ""
         );
+        return;
     }
+
+    __bdd_test_main__(config);
 
     if (step->type != __BDD_NODE_TEST__) {
         return;

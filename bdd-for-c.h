@@ -25,6 +25,7 @@ SOFTWARE.
 #ifndef BDD_FOR_C_H
 #define BDD_FOR_C_H
 
+#include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -150,14 +151,15 @@ typedef enum __bdd_node_type__ {
 
 typedef struct __bdd_test_step__ {
     size_t level;
+    int id;
     char *name;
-    char *full_name;
     __bdd_node_type__ type;
 } __bdd_test_step__;
 
 typedef struct __bdd_node__ {
+    int id;
+    int next_node_id;
     char *name;
-    char *prefix;
     __bdd_node_type__ type;
     __bdd_array__ *list_before;
     __bdd_array__ *list_after;
@@ -172,31 +174,22 @@ __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
         perror("malloc(step)");
         abort();
     }
+    step->id = node->id;
     step->level = level;
     step->type = node->type;
-
-    size_t fullname_len = strlen(node->prefix) + strlen(node->name) + 1;
-
-    step->full_name = calloc(fullname_len, sizeof(char));
-    if (!step->full_name) {
-        perror("calloc(full_name)");
-        abort();
-    }
-    __bdd_strlcat__(step->full_name, node->prefix, fullname_len);
-    __bdd_strlcat__(step->full_name, node->name, fullname_len);
-
     step->name = node->name;
     return step;
 }
 
-__bdd_node__ *__bdd_node_create__(char *name, char *prefix, __bdd_node_type__ type) {
+__bdd_node__ *__bdd_node_create__(int id, char *name, __bdd_node_type__ type) {
     __bdd_node__ *n = malloc(sizeof(__bdd_node__));
     if (!n) {
         perror("malloc(node)");
         abort();
     }
+    n->id = id;
+    n->next_node_id = id + 1;
     n->name = name;
-    n->prefix = prefix;
     n->type = type;
     n->list_before = __bdd_array_create__();
     n->list_after = __bdd_array_create__();
@@ -314,11 +307,13 @@ enum __bdd_run_type__ {
 
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
+    int id;
     size_t test_index;
     size_t test_tap_index;
     size_t failed_test_count;
     __bdd_test_step__ *current_test;
     __bdd_array__ *node_stack;
+    __bdd_array__ *nodes;
     char *error;
     char *location;
     bool use_color;
@@ -327,6 +322,49 @@ typedef struct __bdd_config_type__ {
 
 char *__bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__ *__bdd_config__);
+char *__bdd_vformat__(const char *format, va_list va);
+
+bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptrdiff_t list_offset, char *fmt, ...) {
+    va_list va;
+    va_start(va, fmt);
+    char *name = __bdd_vformat__(fmt, va);
+    va_end(va);
+
+    if (config->run == __BDD_INIT_RUN__) {
+        __bdd_node__ *top = __bdd_array_last__(config->node_stack);
+        __bdd_array__ *list = *(__bdd_array__ **)((unsigned char *)top + list_offset);
+
+       int id = config->id++;
+        __bdd_node__ *node = __bdd_node_create__(id, name, type);
+        __bdd_array_push__(list, node);
+        __bdd_array_push__(config->nodes, node);
+        if (type == __BDD_NODE_GROUP__) {
+            __bdd_array_push__(config->node_stack, node);
+            return true;
+        }
+        return false;
+    }
+
+    __bdd_node__ *node = config->nodes->values[config->id];
+    free(name);
+
+    __bdd_test_step__ *step = config->current_test;
+    bool should_enter = step->id >= node->id && step->id < node->next_node_id;
+    if (should_enter) {
+        __bdd_array_push__(config->node_stack, node);
+        config->id++;
+    } else {
+        config->id = node->next_node_id;
+    }
+    return should_enter;
+}
+
+void __bdd_exit_node__(__bdd_config_type__ *config) {
+    __bdd_node__ *top = __bdd_array_pop__(config->node_stack);
+    if (config->run == __BDD_INIT_RUN__) {
+        top->next_node_id = config->id;
+    }
+}
 
 void __bdd_run__(__bdd_config_type__ *config) {
     __bdd_test_step__ *step = config->current_test;
@@ -398,10 +436,7 @@ void __bdd_run__(__bdd_config_type__ *config) {
     }
 }
 
-char *__bdd_format__(const char *format, ...) {
-    va_list va;
-    va_start(va, format);
-
+char *__bdd_vformat__(const char *format, va_list va) {
     // First we over-allocate
     const size_t size = 2048;
     char *result = calloc(size, sizeof(char));
@@ -418,7 +453,13 @@ char *__bdd_format__(const char *format, ...) {
         abort();
     }
     result = r;
+    return result;
+}
 
+char *__bdd_format__(const char *format, ...) {
+    va_list va;
+    va_start(va, format);
+    char *result = __bdd_vformat__(format, va);
     va_end(va);
     return result;
 }
@@ -458,10 +499,12 @@ bool __bdd_is_supported_term__() {
 int main(void) {
     struct __bdd_config_type__ config = {
         .run = __BDD_INIT_RUN__,
+        .id = 0,
         .test_index = 0,
         .test_tap_index = 0,
         .failed_test_count = 0,
         .node_stack = __bdd_array_create__(),
+        .nodes = __bdd_array_create__(),
         .error = NULL,
         .use_color = 0,
         .use_tap = 0
@@ -476,7 +519,7 @@ int main(void) {
         config.use_color = 1;
     }
 
-    __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__, "", __BDD_NODE_GROUP__));
+    __bdd_array_push__(config.node_stack, __bdd_node_create__(-1, __bdd_spec_name__, __BDD_NODE_GROUP__));
 
     // During the first run we just gather the
     // count of the tests and their descriptions
@@ -502,9 +545,8 @@ int main(void) {
 
     for (size_t i = 0; i < steps->size; ++i) {
         __bdd_test_step__ *step = steps->values[i];
-        __bdd_node_free__(config.node_stack->values[0]);
-        config.node_stack->size = 0;
-        __bdd_array_push__(config.node_stack, __bdd_node_create__(__bdd_spec_name__, "", __BDD_NODE_GROUP__));
+        config.node_stack->size = 1;
+        config.id = 0;
         config.current_test = step;
         __bdd_run__(&config);
     }
@@ -526,88 +568,24 @@ int main(void) {
 char *__bdd_spec_name__ = (name);\
 void __bdd_test_main__ (__bdd_config_type__ *__bdd_config__)\
 
-#define __BDD_LAST_NODE__ ((__bdd_node__ *) __bdd_array_last__(__bdd_config__->node_stack))
-
-#define __BDD_STEP__(node_list, node_name, type, delimiter)\
+#define __BDD_NODE__(node_list, type, ...)\
 for(\
-    void *__bdd_index__ = 0,\
-         *__bdd_node_name__ = (node_name);\
+    bool __bdd_has_run__ = 0;\
     (\
-        (\
-            __bdd_config__->run == __BDD_INIT_RUN__ &&\
-            __bdd_array_push__(\
-                (node_list),\
-                __bdd_node_create__(__bdd_node_name__, __bdd_node_names_concat__(__bdd_config__->node_stack, (delimiter)), (type))\
-            ) &&\
-            false \
-        ) || \
-        (\
-            __bdd_config__->run == __BDD_TEST_RUN__ &&\
-            (intptr_t) __bdd_index__ < 1 &&\
-            __bdd_same_string__(\
-                __bdd_format__("%s%s", __bdd_node_names_concat__(__bdd_config__->node_stack, (delimiter)), __bdd_node_name__),\
-                __bdd_config__->current_test->full_name\
-            )\
-        )\
+      !__bdd_has_run__ && \
+      __bdd_enter_node__(__bdd_config__, (type), offsetof(struct __bdd_node__, node_list), __VA_ARGS__) \
     );\
-    __bdd_index__ = (char*)__bdd_index__ + 1\
+    __bdd_exit_node__(__bdd_config__), \
+    __bdd_has_run__ = 1 \
 )
 
+#define describe(...) __BDD_NODE__(list_children, __BDD_NODE_GROUP__, __VA_ARGS__)
+#define it(...)       __BDD_NODE__(list_children, __BDD_NODE_TEST__, __VA_ARGS__)
 #define xit(...) if(0)
-
-#define it(...) __BDD_STEP__(\
-  __BDD_LAST_NODE__->list_children,\
-  __bdd_format__(__VA_ARGS__),\
-  __BDD_NODE_TEST__,\
-  "-#-it-#-"\
-)
-
-#define before_each() __BDD_STEP__(\
-  __BDD_LAST_NODE__->list_before_each,\
-  __bdd_format__("%i", __BDD_LAST_NODE__->list_before_each->size),\
-  __BDD_NODE_INTERIM__,\
-  "-#-before-each-#-"\
-)
-
-#define after_each() __BDD_STEP__(\
-  __BDD_LAST_NODE__->list_after_each,\
-  __bdd_format__("%i", __BDD_LAST_NODE__->list_after_each->size),\
-  __BDD_NODE_INTERIM__,\
-  "-#-after-each-#-"\
-)
-
-#define before() __BDD_STEP__(\
-  __BDD_LAST_NODE__->list_before,\
-  __bdd_format__("%i", __BDD_LAST_NODE__->list_before->size),\
-  __BDD_NODE_INTERIM__,\
-  "-#-before-#-"\
-)
-
-#define after() __BDD_STEP__(\
-  __BDD_LAST_NODE__->list_after,\
-  __bdd_format__("%i", __BDD_LAST_NODE__->list_after->size),\
-  __BDD_NODE_INTERIM__,\
-  "-#-after-#-"\
-)
-
-#define describe(...)\
-for(\
-    void *__bdd_index__ = 0,\
-         *__bdd_current_node__ = __bdd_node_create__(\
-            __bdd_format__(__VA_ARGS__),\
-            __bdd_node_names_concat__(__bdd_config__->node_stack, "-#-describe-#-"),\
-            __BDD_NODE_GROUP__\
-         )\
-    ;\
-    (\
-        (intptr_t) __bdd_index__ < 1 && (\
-            __bdd_array_push__(__BDD_LAST_NODE__->list_children, __bdd_current_node__),\
-            __bdd_array_push__(__bdd_config__->node_stack, __bdd_current_node__),\
-            true\
-        )\
-    );\
-    ++__bdd_index__, __bdd_array_pop__(__bdd_config__->node_stack) \
-)
+#define before_each() __BDD_NODE__(list_before_each, __BDD_NODE_INTERIM__, "before_each")
+#define after_each()  __BDD_NODE__(list_after_each, __BDD_NODE_INTERIM__, "after_each")
+#define before()      __BDD_NODE__(list_before, __BDD_NODE_INTERIM__, "before")
+#define after()       __BDD_NODE__(list_after, __BDD_NODE_INTERIM__, "after")
 
 #ifndef BDD_NO_CONTEXT_KEYWORD
 #define context(name) describe(name)

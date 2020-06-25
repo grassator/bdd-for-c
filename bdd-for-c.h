@@ -190,7 +190,7 @@ __bdd_node__ *__bdd_node_create__(int id, char *name, __bdd_node_type__ type) {
     }
     n->id = id;
     n->next_node_id = id + 1;
-    n->name = name;
+    n->name = name; // node takes ownership of name
     n->type = type;
     n->list_before = __bdd_array_create__();
     n->list_after = __bdd_array_create__();
@@ -267,21 +267,14 @@ __bdd_array__ *__bdd_node_flatten__(__bdd_node__ *node, __bdd_array__ *steps) {
     return steps;
 }
 
-void __bdd_node_free__(__bdd_node__ *n);
-
-void __bdd_node_free_list__(__bdd_array__ *list) {
-    for (size_t i = 0; i < list->size; ++i) {
-        __bdd_node_free__(list->values[i]);
-    }
-    __bdd_array_free__(list);
-}
-
 void __bdd_node_free__(__bdd_node__ *n) {
-    __bdd_node_free_list__(n->list_before);
-    __bdd_node_free_list__(n->list_after);
-    __bdd_node_free_list__(n->list_before_each);
-    __bdd_node_free_list__(n->list_after_each);
-    __bdd_node_free_list__(n->list_children);
+    free(n->name);
+    __bdd_array_free__(n->list_before);
+    __bdd_array_free__(n->list_after);
+    __bdd_array_free__(n->list_before_each);
+    __bdd_array_free__(n->list_after_each);
+    __bdd_array_free__(n->list_children);
+    free(n);
 }
 
 char *__bdd_node_names_concat__(__bdd_array__ *list, const char *delimiter) {
@@ -339,7 +332,7 @@ bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptr
         __bdd_node__ *top = __bdd_array_last__(config->node_stack);
         __bdd_array__ *list = *(__bdd_array__ **)((unsigned char *)top + list_offset);
 
-       int id = config->id++;
+        int id = config->id++;
         __bdd_node__ *node = __bdd_node_create__(id, name, type);
         __bdd_array_push__(list, node);
         __bdd_array_push__(config->nodes, node);
@@ -547,14 +540,15 @@ int main(void) {
         config.use_color = 1;
     }
 
-    __bdd_array_push__(config.node_stack, __bdd_node_create__(-1, __bdd_spec_name__, __BDD_NODE_GROUP__));
+    __bdd_node__ *root = __bdd_node_create__(-1, __bdd_spec_name__, __BDD_NODE_GROUP__);
+    __bdd_array_push__(config.node_stack, root);
 
     // During the first run we just gather the
     // count of the tests and their descriptions
     __bdd_test_main__(&config);
 
     __bdd_array__ *steps = __bdd_array_create__();
-    __bdd_node_flatten__(config.node_stack->values[0], steps);
+    __bdd_node_flatten__(root, steps);
 
     size_t test_count = 0;
     for (size_t i = 0; i < steps->size; ++i) {
@@ -588,6 +582,18 @@ int main(void) {
         }
         return 1;
     }
+
+    for (size_t i = 0; i < config.nodes->size; ++i) {
+        __bdd_node_free__(config.nodes->values[i]);
+    }
+    root->name = NULL; // name is statically allocated
+    __bdd_node_free__(root);
+    for (size_t i = 0; i < steps->size; ++i) {
+        free(steps->values[i]);
+    }
+    __bdd_array_free__(config.nodes);
+    __bdd_array_free__(config.node_stack);
+    __bdd_array_free__(steps);
 
     return 0;
 }

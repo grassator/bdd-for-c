@@ -273,6 +273,12 @@ char *__bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__ *__bdd_config__);
 char *__bdd_vformat__(const char *format, va_list va);
 
+void __bdd_indent__(FILE *fp, size_t level) {
+    for (size_t i = 0; i < level; ++i) {
+        fprintf(fp, "  ");
+    }
+}
+
 bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptrdiff_t list_offset, char *fmt, ...) {
     va_list va;
     va_start(va, fmt);
@@ -340,9 +346,7 @@ void __bdd_run__(__bdd_config_type__ *config) {
     __bdd_test_step__ *step = config->current_test;
 
     if (step->type == __BDD_NODE_GROUP__ && !config->use_tap) {
-        for (size_t i = 0; i < step->level; ++i) {
-            printf("  ");
-        }
+        __bdd_indent__(stdout, step->level);
         printf(
             "%s%s%s\n",
             config->use_color ? __BDD_COLOR_BOLD__ : "",
@@ -368,9 +372,7 @@ void __bdd_run__(__bdd_config_type__ *config) {
                     printf("ok %zu - %s\n", config->test_tap_index, step->name);
                 }
             } else {
-                for (size_t i = 0; i < step->level; ++i) {
-                    printf("  ");
-                }
+                __bdd_indent__(stdout, step->level);
                 printf(
                     "%s %s(OK)%s\n", step->name,
                     config->use_color ? __BDD_COLOR_GREEN__ : "",
@@ -386,21 +388,15 @@ void __bdd_run__(__bdd_config_type__ *config) {
                 printf("not ok %zu - %s\n", config->test_tap_index, step->name);
             }
         } else {
-            for (size_t i = 0; i < step->level; ++i) {
-                printf("  ");
-            }
+            __bdd_indent__(stdout, step->level);
             printf(
                 "%s %s(FAIL)%s\n", step->name,
                 config->use_color ? __BDD_COLOR_RED__ : "",
                 config->use_color ? __BDD_COLOR_RESET__ : ""
             );
-            for (size_t i = 0; i < step->level + 1; ++i) {
-                printf("  ");
-            }
+            __bdd_indent__(stdout, step->level + 1);
             printf("%s\n", config->error);
-            for (size_t i = 0; i < step->level + 2; ++i) {
-                printf("  ");
-            }
+            __bdd_indent__(stdout, step->level + 2);
             printf("%s\n", config->location);
         }
         free(config->error);

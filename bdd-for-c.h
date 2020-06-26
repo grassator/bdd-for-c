@@ -553,6 +553,8 @@ for(\
     __bdd_index__ = (char*)__bdd_index__ + 1\
 )
 
+#define xit(...) if(0)
+
 #define it(...) __BDD_STEP__(\
   __BDD_LAST_NODE__->list_children,\
   __bdd_format__(__VA_ARGS__),\

@@ -520,16 +520,6 @@ int main(void) {
         __bdd_run__(&config);
     }
 
-    if (config.failed_test_count > 0) {
-        if (!config.use_tap) {
-            printf(
-                "\n%zu test%s run, %zu failed.\n",
-                test_count, test_count == 1 ? "" : "s", config.failed_test_count
-            );
-        }
-        return 1;
-    }
-
     for (size_t i = 0; i < config.nodes->size; ++i) {
         __bdd_node_free__(config.nodes->values[i]);
     }
@@ -542,6 +532,15 @@ int main(void) {
     __bdd_array_free__(config.node_stack);
     __bdd_array_free__(steps);
 
+    if (config.failed_test_count > 0) {
+        if (!config.use_tap) {
+            printf(
+                "\n%zu test%s run, %zu failed.\n",
+                test_count, test_count == 1 ? "" : "s", config.failed_test_count
+            );
+        }
+        return 1;
+    }
     return 0;
 }
 
@@ -596,7 +595,7 @@ void __bdd_snprintf__(char *buffer, size_t bufflen, const char *fmt, const char 
 
 #define __BDD_CHECK__(condition, ...) if (!(condition))\
 {\
-    const char *message = __bdd_format__(__VA_ARGS__);\
+    char *message = __bdd_format__(__VA_ARGS__);\
     const char *fmt = __bdd_config__->use_color ?\
         (__BDD_COLOR_RED__ "Check failed:" __BDD_COLOR_RESET__ " %s" ) :\
         "Check failed: %s";\
@@ -604,6 +603,7 @@ void __bdd_snprintf__(char *buffer, size_t bufflen, const char *fmt, const char 
     size_t bufflen = strlen(fmt) + strlen(message) + 1;\
     __bdd_config__->error = calloc(bufflen, sizeof(char));\
     __bdd_snprintf__(__bdd_config__->error, bufflen, fmt, message);\
+    free(message);\
     return;\
 }
 

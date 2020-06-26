@@ -207,7 +207,7 @@ void __bdd_node_flatten_internal__(
     __bdd_array_push__(steps, __bdd_test_step_create__(level, node));
 
     for (size_t i = 0; i < node->list_before->size; ++i) {
-        __bdd_array_push__(steps, __bdd_test_step_create__(level, node->list_before->values[i]));
+        __bdd_array_push__(steps, __bdd_test_step_create__(level + 1, node->list_before->values[i]));
     }
 
     __bdd_array_push__(before_each_lists, node->list_before_each);
@@ -221,7 +221,7 @@ void __bdd_node_flatten_internal__(
     __bdd_array_pop__(after_each_lists);
 
     for (size_t i = 0; i < node->list_after->size; ++i) {
-        __bdd_array_push__(steps, __bdd_test_step_create__(level, node->list_after->values[i]));
+        __bdd_array_push__(steps, __bdd_test_step_create__(level + 1, node->list_after->values[i]));
     }
 }
 
@@ -320,17 +320,17 @@ bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptr
         config->id = node->next_node_id;
     }
 #if defined(BDD_PRINT_TRACE)
-    fprintf(
-        stderr,
-        "%s%d %s [%d, %d) %s%s\n",
-        config->use_color ? __BDD_COLOR_MAGENTA__ : "",
-        config->current_test->id,
+    const char *color = config->use_color ? __BDD_COLOR_MAGENTA__ : "";
+    fprintf(stderr, "%s% 3d ", color, step->id);
+    __bdd_indent__(stderr, config->node_stack->size - 1 - (int)should_enter);
+    const char *reset = config->use_color ? __BDD_COLOR_RESET__ : "";
+    fprintf(stderr,
+        "%s [%d, %d) %s%s\n",
         should_enter ? ">" : "|",
         node->id,
         node->next_node_id,
         node->name,
-        config->use_color ? __BDD_COLOR_RESET__ : ""
-    );
+        reset);
 #endif
     return should_enter;
 }

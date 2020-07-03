@@ -593,16 +593,21 @@ void __bdd_snprintf__(char *buffer, size_t bufflen, const char *fmt, const char 
 #define __BDD_STRING__(x) __BDD_STRING_HELPER__(x)
 #define __STRING__LINE__ __BDD_STRING__(__LINE__)
 
+#define __BDD_FMT_COLOR__ __BDD_COLOR_RED__ "Check failed:" __BDD_COLOR_RESET__ " %s"
+#define __BDD_FMT_PLAIN__ "Check failed: %s"
+
 #define __BDD_CHECK__(condition, ...) if (!(condition))\
 {\
     char *message = __bdd_format__(__VA_ARGS__);\
-    const char *fmt = __bdd_config__->use_color ?\
-        (__BDD_COLOR_RED__ "Check failed:" __BDD_COLOR_RESET__ " %s" ) :\
-        "Check failed: %s";\
+    const char *fmt = __bdd_config__->use_color ? __BDD_FMT_COLOR__ : __BDD_FMT_PLAIN__;\
     __bdd_config__->location = "at " __FILE__ ":" __STRING__LINE__;\
     size_t bufflen = strlen(fmt) + strlen(message) + 1;\
     __bdd_config__->error = calloc(bufflen, sizeof(char));\
-    __bdd_snprintf__(__bdd_config__->error, bufflen, fmt, message);\
+    if (__bdd_config__->use_color) {\
+      snprintf(__bdd_config__->error, bufflen, __BDD_FMT_COLOR__, message);\
+    } else {\
+      snprintf(__bdd_config__->error, bufflen, __BDD_FMT_PLAIN__, message);\
+    }\
     free(message);\
     return;\
 }

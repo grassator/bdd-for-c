@@ -300,7 +300,7 @@ bool __bdd_enter_node__(__bdd_config_type__ *config, __bdd_node_type__ type, ptr
         return false;
     }
 
-    if (config->id >= config->nodes->size) {
+    if (config->id >= (int)config->nodes->size) {
         fprintf(stderr, "non-deterministic spec\n");
         abort();
     }

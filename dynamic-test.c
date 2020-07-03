@@ -21,7 +21,7 @@ spec("dynamic tests") {
         };
 
         describe("strspn") {
-            for (int i = 0; i < ARRAY_LENGTH(strspn_cases); i++) {
+            for (size_t i = 0; i < ARRAY_LENGTH(strspn_cases); i++) {
                 const char *input = strspn_cases[i].input;
                 const char *accept = strspn_cases[i].accept;
                 size_t expected = strspn_cases[i].expected;
@@ -52,7 +52,7 @@ spec("dynamic tests") {
 
         // Similarly, describe(name) also accepts a format string. This can be
         // used when checking that several functions have a similar behavior.
-        for (int i = 0; i < ARRAY_LENGTH(copy_functions); i++)
+        for (size_t i = 0; i < ARRAY_LENGTH(copy_functions); i++)
         describe("the %s function", copy_functions[i].name) {
             it("should copy a string to a buffer") {
                 char data[] = "hello, world";
@@ -90,11 +90,11 @@ spec("dynamic tests") {
         };
 
         // It's also possible to combine the two arbitrarily
-        for (int i = 0; i < ARRAY_LENGTH(arithmetic_tests); i++)
+        for (size_t i = 0; i < ARRAY_LENGTH(arithmetic_tests); i++)
         describe("operator %s", arithmetic_tests[i].symbol) {
             int (*operator)(int, int) = arithmetic_tests[i].operator;
 
-            for (int j = 0; j < arithmetic_tests[i].count; j++) {
+            for (size_t j = 0; j < arithmetic_tests[i].count; j++) {
                 const struct expression *e = &arithmetic_tests[i].examples[j];
                 int a = e->a, b = e->b, c = e->c;
 

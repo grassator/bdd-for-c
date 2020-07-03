@@ -578,17 +578,6 @@ for(\
 #define __BDD_COUNT_ARGS__(...) __BDD_PATTERN_MATCH__(__VA_ARGS__,_,_,_,_,_,_,_,_,_,ONE__)
 #define __BDD_PATTERN_MATCH__(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N, ...) N
 
-void __bdd_snprintf__(char *buffer, size_t bufflen, const char *fmt, const char *message) {
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable: 4996) // _CRT_SECURE_NO_WARNINGS
-#endif
-    snprintf(buffer, bufflen, fmt, message);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-}
-
 #define __BDD_STRING_HELPER__(x) #x
 #define __BDD_STRING__(x) __BDD_STRING_HELPER__(x)
 #define __STRING__LINE__ __BDD_STRING__(__LINE__)

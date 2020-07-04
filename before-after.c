@@ -63,7 +63,7 @@ spec("before and after hooks") {
             check(8 == inner2.before_each_at, "got: %d", inner2.before_each_at);
 
         it("9. it")
-            check(9 == it_at == 1, "got: %d", it_at);
+            check(9 == it_at, "got: %d", it_at);
 
         it("10. inner after each 1")
             check(10 == inner1.after_each_at, "got: %d", inner1.after_each_at);

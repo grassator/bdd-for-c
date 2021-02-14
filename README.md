@@ -250,6 +250,18 @@ The `it` statement is a basic structural block of the spec and is used to
 ensure a particular expectation, validated using `check` statements (described
 below).
 
+### fit / it_only
+
+This is is similar to `it`, but switches test runner into a mode where it
+will only run tests defined with `fit` / `it_only`.
+
+### xit / it_skip
+
+This is is similar to `it`, but skips this particular test. Unlike source
+editing options of disabling the tests like commenting out or `if (0)`
+you still get in an entry in the output with the name of the test marked
+as `(SKIP)`.
+
 ### describe
 
 A `describe` statement must be included directly inside a `spec` or `context`

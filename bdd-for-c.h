@@ -391,6 +391,10 @@ void __bdd_run__(__bdd_config_type__ *config) {
           printf("%s ", step->name);
         }
 
+        if (!skipped) {
+          __bdd_test_main__(config);
+        }
+
         if (skipped) {
             if (config->run == __BDD_TEST_RUN__) {
                 if (!config->has_focus_nodes) {
@@ -444,9 +448,7 @@ void __bdd_run__(__bdd_config_type__ *config) {
             free(config->error);
             config->error = NULL;
         }
-    }
-
-    if (!skipped) {
+    } else if (!skipped) {
       __bdd_test_main__(config);
     }
 }

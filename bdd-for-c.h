@@ -386,7 +386,7 @@ void __bdd_run__(__bdd_config_type__ *config) {
         ++config->test_tap_index;
         // Print the step name before running the test so it is visible
         // even if the test itself crashes.
-        if (config->run == __BDD_TEST_RUN__ && !config->use_tap) {
+        if ((!skipped || !config->has_focus_nodes) && config->run == __BDD_TEST_RUN__ && !config->use_tap) {
           __bdd_indent__(stdout, step->level);
           printf("%s ", step->name);
         }

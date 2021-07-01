@@ -383,73 +383,71 @@ void __bdd_run__(__bdd_config_type__ *config) {
         } else if (step->flags & __bdd_node_flags_skip__) {
           skipped = true;
         }
+        ++config->test_tap_index;
+        // Print the step name before running the test so it is visible
+        // even if the test itself crashes.
+        if (config->run == __BDD_TEST_RUN__ && !config->use_tap) {
+          __bdd_indent__(stdout, step->level);
+          printf("%s ", step->name);
+        }
+
+        if (skipped) {
+            if (config->run == __BDD_TEST_RUN__) {
+                if (!config->has_focus_nodes) {
+                  if (config->use_tap) {
+                      // We only to report tests and not setup / teardown success
+                      if (config->test_tap_index) {
+                          printf("skipped %zu - %s\n", config->test_tap_index, step->name);
+                      }
+                  } else {
+                      printf(
+                          "%s(SKIP)%s\n",
+                          config->use_color ? __BDD_COLOR_YELLOW__ : "",
+                          config->use_color ? __BDD_COLOR_RESET__ : ""
+                      );
+                  }
+                }
+            }
+        } else if (config->error == NULL) {
+            if (config->run == __BDD_TEST_RUN__) {
+                if (config->use_tap) {
+                    // We only to report tests and not setup / teardown success
+                    if (config->test_tap_index) {
+                        printf("ok %zu - %s\n", config->test_tap_index, step->name);
+                    }
+                } else {
+                    printf(
+                        "%s(OK)%s\n",
+                        config->use_color ? __BDD_COLOR_GREEN__ : "",
+                        config->use_color ? __BDD_COLOR_RESET__ : ""
+                    );
+                }
+            }
+        } else {
+            ++config->failed_test_count;
+            if (config->use_tap) {
+                // We only to report tests and not setup / teardown errors
+                if (config->test_tap_index) {
+                    printf("not ok %zu - %s\n", config->test_tap_index, step->name);
+                }
+            } else {
+                printf(
+                    "%s(FAIL)%s\n",
+                    config->use_color ? __BDD_COLOR_RED__ : "",
+                    config->use_color ? __BDD_COLOR_RESET__ : ""
+                );
+                __bdd_indent__(stdout, step->level + 1);
+                printf("%s\n", config->error);
+                __bdd_indent__(stdout, step->level + 2);
+                printf("%s\n", config->location);
+            }
+            free(config->error);
+            config->error = NULL;
+        }
     }
 
     if (!skipped) {
       __bdd_test_main__(config);
-    }
-
-    if (step->type != __BDD_NODE_TEST__) {
-        return;
-    }
-
-    ++config->test_tap_index;
-
-    if (skipped) {
-        if (config->run == __BDD_TEST_RUN__) {
-            if (!config->has_focus_nodes) {
-              if (config->use_tap) {
-                  // We only to report tests and not setup / teardown success
-                  if (config->test_tap_index) {
-                      printf("skipped %zu - %s\n", config->test_tap_index, step->name);
-                  }
-              } else {
-                  __bdd_indent__(stdout, step->level);
-                  printf(
-                      "%s %s(SKIP)%s\n", step->name,
-                      config->use_color ? __BDD_COLOR_YELLOW__ : "",
-                      config->use_color ? __BDD_COLOR_RESET__ : ""
-                  );
-              }
-            }
-        }
-    } else if (config->error == NULL) {
-        if (config->run == __BDD_TEST_RUN__) {
-            if (config->use_tap) {
-                // We only to report tests and not setup / teardown success
-                if (config->test_tap_index) {
-                    printf("ok %zu - %s\n", config->test_tap_index, step->name);
-                }
-            } else {
-                __bdd_indent__(stdout, step->level);
-                printf(
-                    "%s %s(OK)%s\n", step->name,
-                    config->use_color ? __BDD_COLOR_GREEN__ : "",
-                    config->use_color ? __BDD_COLOR_RESET__ : ""
-                );
-            }
-        }
-    } else {
-        ++config->failed_test_count;
-        if (config->use_tap) {
-            // We only to report tests and not setup / teardown errors
-            if (config->test_tap_index) {
-                printf("not ok %zu - %s\n", config->test_tap_index, step->name);
-            }
-        } else {
-            __bdd_indent__(stdout, step->level);
-            printf(
-                "%s %s(FAIL)%s\n", step->name,
-                config->use_color ? __BDD_COLOR_RED__ : "",
-                config->use_color ? __BDD_COLOR_RESET__ : ""
-            );
-            __bdd_indent__(stdout, step->level + 1);
-            printf("%s\n", config->error);
-            __bdd_indent__(stdout, step->level + 2);
-            printf("%s\n", config->location);
-        }
-        free(config->error);
-        config->error = NULL;
     }
 }
 

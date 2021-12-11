@@ -150,6 +150,11 @@ typedef struct __bdd_node__ {
     __bdd_array__ *list_children;
 } __bdd_node__;
 
+enum __bdd_run_type__ {
+    __BDD_INIT_RUN__ = 1,
+    __BDD_TEST_RUN__ = 2
+};
+
 typedef struct __bdd_config_type__ {
     enum __bdd_run_type__ run;
     int id;
@@ -281,11 +286,6 @@ void __bdd_node_free__(__bdd_node__ *n) {
     __bdd_array_free__(n->list_children);
     free(n);
 }
-
-enum __bdd_run_type__ {
-    __BDD_INIT_RUN__ = 1,
-    __BDD_TEST_RUN__ = 2
-};
 
 char *__bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__ *__bdd_config__);

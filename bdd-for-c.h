@@ -150,6 +150,22 @@ typedef struct __bdd_node__ {
     __bdd_array__ *list_children;
 } __bdd_node__;
 
+typedef struct __bdd_config_type__ {
+    enum __bdd_run_type__ run;
+    int id;
+    size_t test_index;
+    size_t test_tap_index;
+    size_t failed_test_count;
+    __bdd_test_step__ *current_test;
+    __bdd_array__ *node_stack;
+    __bdd_array__ *nodes;
+    char *error;
+    char *location;
+    bool use_color;
+    bool use_tap;
+    bool has_focus_nodes;
+} __bdd_config_type__;
+
 __bdd_test_step__ *__bdd_test_step_create__(size_t level, __bdd_node__ *node) {
     __bdd_test_step__ *step = malloc(sizeof(__bdd_test_step__));
     if (!step) {
@@ -188,6 +204,7 @@ bool __bdd_node_is_leaf__(__bdd_node__ *node) {
 }
 
 void __bdd_node_flatten_internal__(
+    __bdd_config_type__ *config,
     size_t level,
     __bdd_node__ *node,
     __bdd_array__  *steps,
@@ -195,6 +212,9 @@ void __bdd_node_flatten_internal__(
     __bdd_array__  *after_each_lists
 ) {
     if (__bdd_node_is_leaf__(node)) {
+        if (config->has_focus_nodes && !(node->flags & __bdd_node_flags_focus__)) {
+            return;
+        }
 
         for (size_t listIndex = 0; listIndex < before_each_lists->size; ++listIndex) {
             __bdd_array__ *list = before_each_lists->values[listIndex];
@@ -225,7 +245,9 @@ void __bdd_node_flatten_internal__(
     __bdd_array_push__(after_each_lists, node->list_after_each);
 
     for (size_t i = 0; i < node->list_children->size; ++i) {
-        __bdd_node_flatten_internal__(level + 1, node->list_children->values[i], steps, before_each_lists, after_each_lists);
+        __bdd_node_flatten_internal__(
+          config, level + 1, node->list_children->values[i], steps, before_each_lists, after_each_lists
+        );
     }
 
     __bdd_array_pop__(before_each_lists);
@@ -236,14 +258,14 @@ void __bdd_node_flatten_internal__(
     }
 }
 
-__bdd_array__ *__bdd_node_flatten__(__bdd_node__ *node, __bdd_array__ *steps) {
+__bdd_array__ *__bdd_node_flatten__(__bdd_config_type__ *config, __bdd_node__ *node, __bdd_array__ *steps) {
     if (node == NULL) {
         return steps;
     }
 
     __bdd_array__ *before_each_lists = __bdd_array_create__();
     __bdd_array__ *after_each_lists = __bdd_array_create__();
-    __bdd_node_flatten_internal__(0, node, steps, before_each_lists, after_each_lists);
+    __bdd_node_flatten_internal__(config, 0, node, steps, before_each_lists, after_each_lists);
     __bdd_array_free__(before_each_lists);
     __bdd_array_free__(after_each_lists);
 
@@ -264,22 +286,6 @@ enum __bdd_run_type__ {
     __BDD_INIT_RUN__ = 1,
     __BDD_TEST_RUN__ = 2
 };
-
-typedef struct __bdd_config_type__ {
-    enum __bdd_run_type__ run;
-    int id;
-    size_t test_index;
-    size_t test_tap_index;
-    size_t failed_test_count;
-    __bdd_test_step__ *current_test;
-    __bdd_array__ *node_stack;
-    __bdd_array__ *nodes;
-    char *error;
-    char *location;
-    bool use_color;
-    bool use_tap;
-    bool has_focus_nodes;
-} __bdd_config_type__;
 
 char *__bdd_spec_name__;
 void __bdd_test_main__(__bdd_config_type__ *__bdd_config__);
@@ -544,7 +550,7 @@ int main(void) {
     __bdd_test_main__(&config);
 
     __bdd_array__ *steps = __bdd_array_create__();
-    __bdd_node_flatten__(root, steps);
+    __bdd_node_flatten__(&config, root, steps);
 
     size_t test_count = 0;
     for (size_t i = 0; i < steps->size; ++i) {

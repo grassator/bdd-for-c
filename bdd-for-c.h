@@ -25,24 +25,26 @@ SOFTWARE.
 #ifndef BDD_FOR_C_H
 #define BDD_FOR_C_H
 
+#ifdef _WIN32
+  #include <stdio.h>
+  #define WIN32_LEAN_AND_MEAN
+  #include <Windows.h>
+  #include <io.h>
+  #define __BDD_IS_ATTY__() _isatty(_fileno(stdout))
+#else
+  // This definition is required for `fileno` to be defined
+  #define _POSIX_C_SOURCE 1
+  #include <stdio.h>
+  #include <unistd.h>
+  #include <term.h>
+  #define __BDD_IS_ATTY__() isatty(fileno(stdout))
+#endif
+
 #include <stddef.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
-#ifndef _WIN32
-#include <unistd.h>
-#include <term.h>
-
-#define __BDD_IS_ATTY__() isatty(fileno(stdout))
-#else
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <io.h>
-#define __BDD_IS_ATTY__() _isatty(_fileno(stdout))
-#endif
 
 #ifdef _MSC_VER
 #pragma warning(push)

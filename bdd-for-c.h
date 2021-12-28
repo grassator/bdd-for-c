@@ -27,7 +27,6 @@ SOFTWARE.
 
 #ifdef _WIN32
   #include <stdio.h>
-  #define WIN32_LEAN_AND_MEAN
   #include <Windows.h>
   #include <io.h>
   #define __BDD_IS_ATTY__() _isatty(_fileno(stdout))

@@ -31,8 +31,10 @@ SOFTWARE.
   #include <io.h>
   #define __BDD_IS_ATTY__() _isatty(_fileno(stdout))
 #else
-  // This definition is required for `fileno` to be defined
-  #define _POSIX_C_SOURCE 1
+  #ifndef _POSIX_C_SOURCE
+    // This definition is required for `fileno` to be defined
+    #define _POSIX_C_SOURCE 200809
+  #endif
   #include <stdio.h>
   #include <unistd.h>
   #include <term.h>
